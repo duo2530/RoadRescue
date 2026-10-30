@@ -13,3 +13,9 @@ logs/*.jsonl
 .DS_Store
 **/upload/
 evidence/**/*.tmp
+logs/
+backend/logs/
+backend/infra/data/
+backend/infra/artifacts/
+apps/*/.env
+!**/.env.example

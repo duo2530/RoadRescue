@@ -1,0 +1,35 @@
+wx:
+  miniapp:
+    appId: ${WX_APP_ID:}  # 小程序微信公众平台appId
+    secret: ${WX_APP_SECRET:}
+  v3pay:
+    #小程序微信公众平台appId
+    appid: ${WX_APP_ID:}
+    #商户号
+    merchantId: ${WX_PAY_MCH_ID:}
+    #商户API私钥路径
+    privateKeyPath: ${WX_PAY_PRIVATE_KEY_PATH:}
+    #商户证书序列号
+    merchantSerialNumber: ${WX_PAY_SERIAL_NO:}
+    #商户APIV3密钥
+    apiV3key: ${WX_PAY_API_V3_KEY:}
+    #微信支付公钥文件路径(商户平台-API安全-微信支付公钥)
+    publicKeyPath: ${WX_PAY_PUBLIC_KEY_PATH:}
+    #微信支付公钥ID(PUB_KEY_ID_ 开头)
+    publicKeyId: ${WX_PAY_PUBLIC_KEY_ID:}
+    #异步回调地址
+    notifyUrl: http://127.0.0.1:8600/payment/wxPay/notify
+tencent:
+  cloud:
+    secretId: ${TENCENT_SECRET_ID:}
+    secretKey: ${TENCENT_SECRET_KEY:}
+    region: ap-beijing
+    bucketPrivate: daijia-private-1307503602
+    persionGroupId: 1
+  map:
+    key: ${TENCENT_MAP_KEY:}
+minio:
+  endpointUrl: http://127.0.0.1:9000
+  accessKey: admin
+  secreKey: admin123456
+  bucketName: sph

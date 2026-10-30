@@ -1,0 +1,83 @@
+{
+  "pages": [{
+    "path": "pages/hall/index",
+    "style": {
+      "navigationBarTitleText": "抢单大厅",
+      "navigationStyle": "custom",
+      "enablePullDownRefresh": true
+    }
+  }, {
+    "path": "pages/login",
+    "style": {
+      "navigationBarTitleText": "登录",
+      "navigationStyle": "custom"
+    }
+  }, {
+    "path": "pages/order/index",
+    "style": {
+      "navigationBarTitleText": "我的订单",
+      "navigationStyle": "custom",
+      "enablePullDownRefresh": true
+    }
+  }, {
+    "path": "pages/order/detail",
+    "style": {
+      "navigationBarTitleText": "订单详情",
+      "navigationStyle": "custom"
+    }
+  }, {
+    "path": "pages/mine/index",
+    "style": {
+      "navigationBarTitleText": "个人中心",
+      "navigationStyle": "custom"
+    }
+  }, {
+    "path": "pages/mine/profile",
+    "style": {
+      "navigationBarTitleText": "我的资料",
+      "navigationStyle": "custom"
+    }
+  }, {
+    "path": "pages/mine/flows",
+    "style": {
+      "navigationBarTitleText": "钱包流水",
+      "navigationStyle": "custom"
+    }
+  }, {
+    "path": "pages/auth/index",
+    "style": {
+      "navigationBarTitleText": "小板运输司机认证",
+      "navigationStyle": "custom"
+    }
+  }, {
+    "path": "pages/auth/personal",
+    "style": {
+      "navigationBarTitleText": "信息注册",
+      "navigationStyle": "custom"
+    }
+  }, {
+    "path": "pages/auth/vehicle",
+    "style": {
+      "navigationBarTitleText": "车辆信息",
+      "navigationStyle": "custom"
+    }
+  }, {
+    "path": "pages/auth/insurance",
+    "style": {
+      "navigationBarTitleText": "责任险保单",
+      "navigationStyle": "custom"
+    }
+  }, {
+    "path": "pages/common/textview",
+    "style": {
+      "navigationBarTitleText": "浏览文本",
+      "navigationStyle": "custom"
+    }
+  }],
+  "globalStyle": {
+    "navigationBarTextStyle": "white",
+    "navigationBarTitleText": "中道救援司机端",
+    "navigationBarBackgroundColor": "#2c395f",
+    "backgroundColor": "#f4f5f7"
+  }
+}

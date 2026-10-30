@@ -1,0 +1,5 @@
+html, body, #app { margin: 0; height: 100%; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif; background: #f2f4f7; }
+.page-card { margin-bottom: 16px; }
+.toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+.pager { margin-top: 12px; display: flex; justify-content: flex-end; }

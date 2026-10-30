@@ -1,0 +1,128 @@
+/* 驾驶证/行驶证、责任险保单页（截图中没有，沿用「信息注册」页的样式） */
+.page {
+  min-height: 100vh;
+  background: $zd-bg;
+  padding-bottom: calc(#{r(86)} + env(safe-area-inset-bottom));
+}
+
+.policy {
+  display: flex;
+  align-items: center;
+  padding: r(14) r(17) r(14) r(16);
+  background: #fff0ee;
+}
+
+.policy-icon {
+  flex-shrink: 0;
+  width: r(13);
+  height: r(13);
+  margin-right: r(10);
+}
+
+.policy-text {
+  font-size: r(14);
+  line-height: r(20);
+  font-weight: bold;
+  color: #ff6337;
+}
+
+.section {
+  padding: r(22) r(17) r(28);
+  background: #fff;
+}
+
+.section + .section {
+  margin-top: r(10);
+}
+
+.label {
+  font-size: r(15);
+  line-height: r(15);
+  font-weight: bold;
+  color: $zd-text;
+}
+
+.star {
+  margin-right: r(4);
+  color: #ff0707;
+}
+
+.sub {
+  margin-top: r(8);
+  font-size: r(12);
+  color: #999;
+}
+
+.pair {
+  margin-top: r(7);
+  display: flex;
+  justify-content: space-between;
+}
+
+.half {
+  display: block;
+  width: r(176);
+  height: r(110);
+}
+
+.single {
+  margin-top: r(7);
+}
+
+.form {
+  margin-top: r(10);
+  padding: r(12.5) r(24) r(12.5) r(31);
+  background: #fff;
+}
+
+.row {
+  height: r(36);
+  display: flex;
+  align-items: center;
+}
+
+.row-label {
+  width: r(100);
+  font-size: r(15);
+  color: $zd-text;
+}
+
+.row-label .star {
+  margin-right: r(2);
+}
+
+.row-input,
+.row-value {
+  flex: 1;
+  text-align: right;
+  font-size: r(13);
+  color: $zd-text;
+}
+
+.row-value {
+  margin-right: r(4);
+}
+
+.row-value.empty {
+  font-size: 12px;
+  color: #808080;
+}
+
+.footer {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: r(20) r(40) calc(#{r(20)} + env(safe-area-inset-bottom));
+  background: $zd-bg;
+}
+
+.btn {
+  height: r(46);
+  line-height: r(46);
+  border-radius: r(23);
+  text-align: center;
+  font-size: r(15);
+  color: #fff;
+  background: $zd-btn;
+}

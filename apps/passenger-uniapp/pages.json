@@ -1,0 +1,57 @@
+{
+  "pages": [{
+    "path": "pages/index",
+    "style": {
+      "navigationBarTitleText": "中道救援",
+      "navigationStyle": "custom"
+    }
+  }, {
+    "path": "pages/order/index",
+    "style": {
+      "navigationBarTitleText": "服务查询",
+      "navigationStyle": "custom"
+    }
+  }, {
+    "path": "pages/order/detail",
+    "style": {
+      "navigationBarTitleText": "订单详情",
+      "navigationStyle": "custom"
+    }
+  }, {
+    "path": "pages/mine/index",
+    "style": {
+      "navigationBarTitleText": "我的",
+      "navigationStyle": "custom"
+    }
+  }, {
+    "path": "pages/mine/setting",
+    "style": {
+      "navigationBarTitleText": "设置",
+      "navigationStyle": "custom"
+    }
+  }, {
+    "path": "pages/coupon/index",
+    "style": {
+      "navigationBarTitleText": "我的优惠券",
+      "navigationStyle": "custom"
+    }
+  }, {
+    "path": "pages/vehicle/index",
+    "style": {
+      "navigationBarTitleText": "选择车牌号",
+      "navigationStyle": "custom"
+    }
+  }, {
+    "path": "pages/common/textview",
+    "style": {
+      "navigationBarTitleText": "浏览文本",
+      "navigationStyle": "custom"
+    }
+  }],
+  "globalStyle": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "中道救援",
+    "navigationBarBackgroundColor": "#FFFFFF",
+    "backgroundColor": "#F6F7F8"
+  }
+}
