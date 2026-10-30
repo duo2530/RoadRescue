@@ -1,0 +1,15 @@
+﻿node_modules/
+dist/
+unpackage/
+target/
+.idea/
+*.iml
+.env
+.env.local
+*.pem
+*.key
+logs/*.log
+logs/*.jsonl
+.DS_Store
+**/upload/
+evidence/**/*.tmp
