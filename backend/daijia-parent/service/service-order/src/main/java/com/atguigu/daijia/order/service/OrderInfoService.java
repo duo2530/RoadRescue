@@ -14,6 +14,8 @@ import java.math.BigDecimal;
 
 public interface OrderInfoService extends IService<OrderInfo> {
 
+    OrderPayVo preparePayment(String orderNo, Long customerId);
+
     //乘客下单
     Long saveOrderInfo(OrderInfoForm orderInfoForm);
 

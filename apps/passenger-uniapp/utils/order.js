@@ -14,11 +14,13 @@ export const statusText = {
   waiting: '待接单',
   dispatched: '已派车',
   rescuing: '救援中',
+  settling: '待结算',
+  unpaid: '待付款',
   finished: '已完成',
   cancelled: '已取消'
 }
 
-export const STATUS_STEPS = ['waiting', 'dispatched', 'rescuing', 'finished']
+export const STATUS_STEPS = ['waiting', 'dispatched', 'rescuing', 'unpaid', 'finished']
 
 const pad = n => String(n).padStart(2, '0')
 

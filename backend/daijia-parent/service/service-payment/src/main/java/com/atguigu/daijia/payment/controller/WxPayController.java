@@ -10,6 +10,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -17,6 +18,7 @@ import java.util.Map;
 
 @Tag(name = "微信支付接口")
 @RestController
+@ConditionalOnProperty(name = "zhongdao.payment.wechat.enabled", havingValue = "true")
 @RequestMapping("payment/wxPay")
 @Slf4j
 public class WxPayController {

@@ -1,5 +1,8 @@
 package com.atguigu.daijia.order.service.impl;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
+import com.atguigu.daijia.common.util.RescuePricing;
 import com.atguigu.daijia.common.constant.RedisConstant;
 import com.atguigu.daijia.common.constant.SystemConstant;
 import com.atguigu.daijia.common.execption.GuiguException;
@@ -29,6 +32,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.xml.crypto.Data;
 import java.math.BigDecimal;
@@ -295,15 +299,35 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
     private OrderProfitsharingMapper orderProfitsharingMapper;
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean endDrive(UpdateOrderBillForm updateOrderBillForm) {
+        OrderInfo current = orderInfoMapper.selectById(updateOrderBillForm.getOrderId());
+        if (current == null || !java.util.Objects.equals(current.getDriverId(), updateOrderBillForm.getDriverId())
+                || !OrderStatus.START_SERVICE.getStatus().equals(current.getStatus())) {
+            throw new GuiguException(205, "订单尚未开始服务或已经结算");
+        }
+        BigDecimal rescueTotal = rescueTotal(current, updateOrderBillForm.getTollFee(),
+                updateOrderBillForm.getParkingFee(), updateOrderBillForm.getOtherFee(), current.getFavourFee());
+        if (rescueTotal != null) {
+            updateOrderBillForm.setTotalAmount(rescueTotal);
+            updateOrderBillForm.setOrderAmount(rescueTotal);
+            updateOrderBillForm.setBaseDistanceFee(rescueBase(current));
+            // 原代驾分账规则按原金额计算，救援分账暂不自动执行。
+            updateOrderBillForm.setPlatformIncome(BigDecimal.ZERO);
+            updateOrderBillForm.setDriverIncome(rescueTotal);
+            updateOrderBillForm.setPaymentFee(BigDecimal.ZERO);
+            updateOrderBillForm.setDriverTaxFee(BigDecimal.ZERO);
+            updateOrderBillForm.setRewardAmount(BigDecimal.ZERO);
+        }
         //1 更新订单信息
         // update order_info set ..... where id=? and driver_id=?
         LambdaQueryWrapper<OrderInfo> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(OrderInfo::getId,updateOrderBillForm.getOrderId());
         wrapper.eq(OrderInfo::getDriverId,updateOrderBillForm.getDriverId());
+        wrapper.eq(OrderInfo::getStatus, OrderStatus.START_SERVICE.getStatus());
 
         OrderInfo orderInfo = new OrderInfo();
-        orderInfo.setStatus(OrderStatus.END_SERVICE.getStatus());
+        orderInfo.setStatus(OrderStatus.UNPAID.getStatus());
         orderInfo.setRealAmount(updateOrderBillForm.getTotalAmount());
         orderInfo.setFavourFee(updateOrderBillForm.getFavourFee());
         orderInfo.setRealDistance(updateOrderBillForm.getRealDistance());
@@ -375,6 +399,7 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
         LambdaQueryWrapper<OrderInfo> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(OrderInfo::getId, orderId);
         queryWrapper.eq(OrderInfo::getDriverId, driverId);
+        queryWrapper.eq(OrderInfo::getStatus, OrderStatus.END_SERVICE.getStatus());
         //更新字段
         OrderInfo updateOrderInfo = new OrderInfo();
         updateOrderInfo.setStatus(OrderStatus.UNPAID.getStatus());
@@ -403,13 +428,16 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
         LambdaQueryWrapper<OrderInfo> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(OrderInfo::getOrderNo,orderNo);
         OrderInfo orderInfo = orderInfoMapper.selectOne(wrapper);
-        if(orderInfo == null || orderInfo.getStatus() == OrderStatus.PAID.getStatus()) {
+        if (orderInfo == null) throw new GuiguException(205, "订单不存在");
+        if (orderInfo.getStatus() == OrderStatus.PAID.getStatus()
+                || orderInfo.getStatus() == OrderStatus.FINISH.getStatus()) {
             return true;
         }
 
         //2 更新状态
         LambdaQueryWrapper<OrderInfo> updateWrapper = new LambdaQueryWrapper<>();
         updateWrapper.eq(OrderInfo::getOrderNo,orderNo);
+        updateWrapper.eq(OrderInfo::getStatus, OrderStatus.UNPAID.getStatus());
 
         OrderInfo updateOrderInfo = new OrderInfo();
         updateOrderInfo.setStatus(OrderStatus.PAID.getStatus());
@@ -422,6 +450,57 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
         } else {
             throw new GuiguException(ResultCodeEnum.UPDATE_ERROR);
         }
+    }
+
+    private BigDecimal nonNegative(BigDecimal value) {
+        if (value == null) return BigDecimal.ZERO;
+        if (value.signum() < 0) throw new GuiguException(210, "费用不能为负数");
+        return value.setScale(2, java.math.RoundingMode.UNNECESSARY);
+    }
+
+    private BigDecimal rescueBase(OrderInfo order) {
+        JSONObject extra;
+        try { extra = JSON.parseObject(order.getRemark()); }
+        catch (RuntimeException e) { return null; }
+        if (extra == null || !RescuePricing.supports(extra.getString("serviceType"))) return null;
+        return RescuePricing.price(extra.getString("serviceType"), order.getExpectDistance());
+    }
+
+    private BigDecimal rescueTotal(OrderInfo order, BigDecimal toll, BigDecimal parking, BigDecimal other, BigDecimal favour) {
+        BigDecimal base = rescueBase(order);
+        return base == null ? null : base.add(nonNegative(toll)).add(nonNegative(parking))
+                .add(nonNegative(other)).add(nonNegative(favour));
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public OrderPayVo preparePayment(String orderNo, Long customerId) {
+        // 锁定账单发布过程，已发布的账单不再随支付请求改变金额。
+        OrderInfo order = orderInfoMapper.selectOne(new LambdaQueryWrapper<OrderInfo>()
+                .eq(OrderInfo::getOrderNo, orderNo).eq(OrderInfo::getCustomerId, customerId).last("FOR UPDATE"));
+        if (order == null) throw new GuiguException(205, "订单不存在或无权支付");
+        if (OrderStatus.END_SERVICE.getStatus().equals(order.getStatus())) {
+            OrderBill bill = orderBillMapper.selectOne(new LambdaQueryWrapper<OrderBill>().eq(OrderBill::getOrderId, order.getId()));
+            if (bill == null) throw new GuiguException(204, "账单尚未生成");
+            BigDecimal total = rescueTotal(order, bill.getTollFee(), bill.getParkingFee(), bill.getOtherFee(), bill.getFavourFee());
+            if (total != null) {
+                bill.setTotalAmount(total);
+                bill.setBaseDistanceFee(rescueBase(order));
+                bill.setPayAmount(total.subtract(nonNegative(bill.getCouponAmount())).max(BigDecimal.ZERO));
+                orderBillMapper.updateById(bill);
+                order.setRealAmount(total);
+            }
+            order.setStatus(OrderStatus.UNPAID.getStatus());
+            orderInfoMapper.updateById(order);
+        }
+        if (!OrderStatus.UNPAID.getStatus().equals(order.getStatus())) {
+            throw new GuiguException(210, "当前订单不可支付");
+        }
+        OrderPayVo pay = getOrderPayVo(orderNo, customerId);
+        if (pay == null || pay.getPayAmount() == null || pay.getPayAmount().signum() <= 0) {
+            throw new GuiguException(210, "应付金额无效");
+        }
+        return pay;
     }
 
     @Override

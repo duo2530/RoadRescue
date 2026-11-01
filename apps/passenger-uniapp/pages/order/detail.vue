@@ -89,31 +89,48 @@
       </view>
 
       <view class="actions">
+        <view v-if="canPay" class="btn btn-primary" @click="pay">{{ paying ? '正在打开收银台…' : paymentLabel }}</view>
+        <view v-if="canPay" class="btn btn-plain" @click="checkPayment(false)">我已完成支付，查询结果</view>
         <view class="btn btn-plain" @click="call(servicePhone)">联系客服</view>
         <view v-if="canCancel" class="btn btn-plain" @click="cancel">取消订单</view>
       </view>
+      <view v-if="canPay" class="payment-note">{{ paymentNote }}</view>
     </view>
   </view>
 </template>
 
 <script setup>
   import { ref, computed } from 'vue'
-  import { onLoad, onShow, onHide } from '@dcloudio/uni-app'
+  import { onLoad, onShow, onHide, onUnload } from '@dcloudio/uni-app'
   import config from '@/config'
-  import { getOrder, cancelOrder } from '@/api/order'
+  import { getOrder, cancelOrder, createPayment, queryPayment } from '@/api/order'
   import { serviceName, statusText, STATUS_STEPS, formatTime } from '@/utils/order'
 
   const servicePhone = config.appInfo.servicePhone
   const order = ref(null)
+  const paying = ref(false)
+  let checking = false
+  let returningFromPayment = false
+  let paymentChannel = 'WECHAT_MINI'
+  let paymentLabel = '微信支付（暂未启用）'
+  let paymentNote = '小程序微信支付接口已预留，暂未启用'
+  // #ifdef H5
+  paymentChannel = 'ALIPAY_WAP_SANDBOX'
+  paymentLabel = '支付宝沙箱支付'
+  paymentNote = '支付宝沙箱环境，使用沙箱买家账号支付，不扣真实资金'
+  // #endif
   let id = ''
   let timer = null
 
-  const stepIndex = computed(() => STATUS_STEPS.indexOf(order.value.status))
+  const stepIndex = computed(() => STATUS_STEPS.indexOf(order.value.status === 'settling' ? 'unpaid' : order.value.status))
+  const canPay = computed(() => order.value && ['settling', 'unpaid'].includes(order.value.status))
   const canCancel = computed(() => ['waiting', 'dispatched'].includes(order.value.status))
   const statusDesc = computed(() => ({
     waiting: '平台正在为您调度附近的救援车辆，请保持电话畅通',
     dispatched: '救援师傅已出发，预计15分钟内到达',
     rescuing: '救援师傅正在为您服务',
+    settling: '救援已结束，支付前将由平台核对最终账单',
+    unpaid: '救援已结束，请核对账单并完成支付',
     finished: '本次救援已完成，感谢您的信任',
     cancelled: '订单已取消'
   })[order.value.status])
@@ -126,16 +143,70 @@
 
   onLoad(options => {
     id = options.id
+    returningFromPayment = options.paymentReturn === '1'
   })
 
   onShow(() => {
-    load()
+    clearInterval(timer)
+    load().then(() => {
+      const pending = uni.getStorageSync('zd_pending_payment')
+      if (canPay.value && (returningFromPayment || (pending && pending.id === id))) return checkPayment(true)
+    }).catch(() => {})
     timer = setInterval(() => {
-      if (order.value && STATUS_STEPS.indexOf(order.value.status) < 3 && order.value.status !== 'cancelled') load()
+      if (order.value && !['finished', 'cancelled'].includes(order.value.status)) {
+        load().then(() => {
+          const pending = uni.getStorageSync('zd_pending_payment')
+          if (canPay.value && pending && pending.id === id) return checkPayment(true)
+        }).catch(() => {})
+      }
     }, 5000)
   })
 
   onHide(() => clearInterval(timer))
+  onUnload(() => clearInterval(timer))
+
+  async function pay() {
+    if (paying.value || !canPay.value) return
+    if (paymentChannel === 'WECHAT_MINI') {
+      uni.showToast({ title: '微信支付暂未启用', icon: 'none' })
+      return
+    }
+    paying.value = true
+    try {
+      const data = { orderNo: order.value.orderNo, channel: paymentChannel }
+      // #ifdef H5
+      data.returnOrigin = window.location.origin
+      // #endif
+      const session = await createPayment(data)
+      uni.setStorageSync('zd_pending_payment', { id, orderNo: order.value.orderNo })
+      // #ifdef H5
+      const url = new URL(session.redirectUrl)
+      if (url.protocol !== 'https:' || !['openapi-sandbox.dl.alipaydev.com', 'openapi.alipaydev.com'].includes(url.hostname)) {
+        throw new Error('收银台地址无效')
+      }
+      window.location.assign(url.href)
+      // #endif
+    } catch (error) {
+      if (error instanceof Error) uni.showToast({ title: error.message, icon: 'none' })
+    } finally { paying.value = false }
+  }
+
+  async function checkPayment(silent = false) {
+    if (checking || !order.value || !canPay.value) return
+    checking = true
+    try {
+      const paid = await queryPayment(order.value.orderNo)
+      await load()
+      if (paid) {
+        uni.removeStorageSync('zd_pending_payment')
+        if (!silent) uni.showToast({ title: '支付成功', icon: 'success' })
+      } else if (!silent) {
+        uni.showToast({ title: '尚未确认支付，请稍后查询', icon: 'none' })
+      }
+    } catch (error) {
+      if (!silent) uni.showToast({ title: (error && error.msg) || '支付结果查询失败，请重试', icon: 'none' })
+    } finally { checking = false }
+  }
 
   function call(phoneNumber) {
     uni.makePhoneCall({ phoneNumber })
@@ -157,6 +228,8 @@
 </script>
 
 <style lang="scss" scoped>
+  .payment-note { margin-top: r(12); color: #888; font-size: r(12); text-align: center; }
+  .btn-primary { color: #fff; background: $zd-blue; }
   .page {
     min-height: 100vh;
     background: #f1f3f7;
@@ -319,6 +392,8 @@
 
   .actions {
     display: flex;
+    flex-wrap: wrap;
+    gap: r(10);
     justify-content: flex-end;
     margin-top: r(16);
   }
@@ -326,12 +401,14 @@
   .btn {
     height: r(34);
     padding: 0 r(18);
-    margin-left: r(10);
+    justify-content: center;
     border-radius: r(17);
     display: flex;
     align-items: center;
     font-size: r(13);
   }
+
+  .actions .btn-primary { flex-basis: 100%; height: r(44); }
 
   .btn-plain {
     border: 1px solid #ccc;

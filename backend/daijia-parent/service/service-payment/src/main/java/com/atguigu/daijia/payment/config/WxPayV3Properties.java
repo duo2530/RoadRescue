@@ -5,6 +5,7 @@ import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 
 @Configuration
 @ConfigurationProperties(prefix="wx.v3pay") //读取节点
@@ -29,6 +30,7 @@ public class WxPayV3Properties {
 
     /** 商户已启用微信支付公钥模式,平台证书接口不可用,改用公钥验签 */
     @Bean
+    @Lazy
     public RSAPublicKeyConfig getConfig(){
         return new RSAPublicKeyConfig.Builder()
                 .merchantId(this.getMerchantId())

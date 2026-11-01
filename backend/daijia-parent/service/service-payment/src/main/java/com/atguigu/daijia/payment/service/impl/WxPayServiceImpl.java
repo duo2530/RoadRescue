@@ -31,12 +31,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
 import java.lang.invoke.LambdaConversionException;
 import java.math.BigDecimal;
 import java.util.Date;
 
 @Service
+@ConditionalOnProperty(name = "zhongdao.payment.wechat.enabled", havingValue = "true")
 @Slf4j
 public class WxPayServiceImpl implements WxPayService {
 
@@ -44,6 +47,7 @@ public class WxPayServiceImpl implements WxPayService {
     private PaymentInfoMapper paymentInfoMapper;
 
     @Autowired
+    @Lazy
     private RSAPublicKeyConfig rsaAutoCertificateConfig;
 
     @Autowired

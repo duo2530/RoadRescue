@@ -1,5 +1,8 @@
 package com.atguigu.daijia.customer.service.impl;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
+import com.atguigu.daijia.common.util.RescuePricing;
 import com.atguigu.daijia.common.execption.GuiguException;
 import com.atguigu.daijia.common.result.Result;
 import com.atguigu.daijia.common.result.ResultCodeEnum;
@@ -114,6 +117,13 @@ public class OrderServiceImpl implements OrderService {
         FeeRuleResponseVo feeRuleResponseVo = feeRuleResponseVoResult.getData();
 
         //封装数据
+        JSONObject rescue = JSON.parseObject(submitOrderForm.getRemark());
+        BigDecimal quote = RescuePricing.price(rescue.getString("serviceType"), drivingLineVo.getDistance());
+        rescue.put("price", quote);
+        rescue.put("distance", drivingLineVo.getDistance());
+        rescue.put("pricingVersion", "rescue-v1");
+        submitOrderForm.setRemark(rescue.toJSONString());
+        feeRuleResponseVo.setTotalAmount(quote);
         OrderInfoForm orderInfoForm = new OrderInfoForm();
         BeanUtils.copyProperties(submitOrderForm,orderInfoForm);
         orderInfoForm.setExpectDistance(drivingLineVo.getDistance());
@@ -158,7 +168,7 @@ public class OrderServiceImpl implements OrderService {
     public OrderInfoVo getOrderInfo(Long orderId, Long customerId) {
         OrderInfo orderInfo = orderInfoFeignClient.getOrderInfo(orderId).getData();
         //判断
-        if(orderInfo.getCustomerId() != customerId) {
+        if(orderInfo == null || !java.util.Objects.equals(orderInfo.getCustomerId(), customerId)) {
             throw new GuiguException(ResultCodeEnum.ILLEGAL_REQUEST);
         }
 

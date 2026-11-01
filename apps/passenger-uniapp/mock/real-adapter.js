@@ -47,7 +47,9 @@ function mapStatus(s) {
   if (s === 1) return 'waiting'
   if (s === 2 || s === 3) return 'dispatched'
   if (s === 4 || s === 5) return 'rescuing'
-  if (s >= 6) return 'finished'
+  if (s === 6) return 'settling'
+  if (s === 7) return 'unpaid'
+  if (s === 8 || s === 9) return 'finished'
   return 'cancelled'
 }
 
@@ -61,8 +63,9 @@ function parseRemark(remark) {
 
 function toOrder(o) {
   const extra = parseRemark(o.remark)
-  const amount = o.orderBillVo ? Number(o.orderBillVo.totalAmount) : Number(extra.price ?? o.amount ?? o.expectAmount ?? 0)
-  const payAmount = o.orderBillVo ? Number(o.orderBillVo.payAmount) : amount
+  const amount = o.orderBillVo ? Number(o.orderBillVo.totalAmount)
+    : Number(o.status >= 6 ? (o.amount ?? extra.price ?? 0) : (extra.price ?? o.amount ?? o.expectAmount ?? 0))
+  const payAmount = o.orderBillVo ? Number(o.orderBillVo.payAmount) : Number(o.payAmount ?? amount)
   const driver = o.driverInfoVo
   return {
     id: String(o.orderId || o.id),
@@ -129,9 +132,11 @@ const handlers = [
     if (r.code !== 200) return r
     const history = query.type === 'history'
     const list = (r.data.records || []).map(toOrder)
-    return ok(list.filter(o => ['waiting', 'dispatched', 'rescuing'].includes(o.status) !== history))
+    return ok(list.filter(o => ['waiting', 'dispatched', 'rescuing', 'settling', 'unpaid'].includes(o.status) !== history))
   })],
   ['GET', /^\/order\/(\d+)$/, ({ match }) => call('GET', '/order/getOrderInfo/' + match[1]).then(r => (r.code === 200 ? ok(toOrder(r.data)) : r))],
+  ['POST', /^\/payment\/create$/, ({ data }) => call('POST', '/order/payment/create', data)],
+  ['GET', /^\/payment\/status\/([A-Za-z0-9_-]+)$/, ({ match }) => call('GET', '/order/payment/status/' + match[1])],
   ['POST', /^\/order\/(\d+)\/cancel$/, ({ match }) => call('GET', '/order/cancelOrder/' + match[1]).then(r => {
     if (r.code !== 200) return r
     if (!r.data) return { code: 500, msg: '师傅已接单，请联系客服取消' }

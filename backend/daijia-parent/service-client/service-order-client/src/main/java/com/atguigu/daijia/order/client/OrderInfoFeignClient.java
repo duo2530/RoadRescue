@@ -20,6 +20,10 @@ import java.math.BigDecimal;
 @FeignClient(value = "service-order")
 public interface OrderInfoFeignClient {
 
+    @PostMapping("/order/info/preparePayment/{orderNo}/{customerId}")
+    Result<OrderPayVo> preparePayment(@PathVariable("orderNo") String orderNo,
+                                      @PathVariable("customerId") Long customerId);
+
     /**
      * 保存订单信息
      * @param orderInfoForm

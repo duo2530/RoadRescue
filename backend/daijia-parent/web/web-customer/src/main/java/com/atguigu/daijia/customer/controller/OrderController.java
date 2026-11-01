@@ -131,16 +131,14 @@ public class OrderController {
     @GuiguLogin
     @PostMapping("/createWxPayment")
     public Result<WxPrepayVo> createWxPayment(@RequestBody CreateWxPaymentForm createWxPaymentForm) {
-        Long customerId = AuthContextHolder.getUserId();
-        createWxPaymentForm.setCustomerId(customerId);
-        return Result.ok(orderService.createWxPayment(createWxPaymentForm));
+        return Result.build(null, 501, "小程序微信支付接口已预留，暂未启用");
     }
 
     @Operation(summary = "支付状态查询")
     @GuiguLogin
     @GetMapping("/queryPayStatus/{orderNo}")
     public Result<Boolean> queryPayStatus(@PathVariable String orderNo) {
-        return Result.ok(orderService.queryPayStatus(orderNo));
+        return Result.build(null, 501, "微信支付暂未启用，请使用订单支付状态接口");
     }
 }
 

@@ -1,5 +1,7 @@
 package com.atguigu.daijia.payment.receiver;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+
 import com.atguigu.daijia.common.constant.MqConst;
 import com.atguigu.daijia.payment.service.WxPayService;
 import com.rabbitmq.client.Channel;
@@ -12,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
+@ConditionalOnProperty(name = "zhongdao.payment.wechat.enabled", havingValue = "true")
 public class PaymentReceiver {
 
     @Autowired

@@ -37,3 +37,12 @@ export function getOrder(id) {
 export function cancelOrder(id) {
   return request({ url: '/order/' + id + '/cancel', method: 'post' })
 }
+
+/** 创建支付会话；H5 使用支付宝沙箱，小程序微信渠道预留。金额由服务端账单决定。 */
+export function createPayment(data) {
+  return request({ url: '/payment/create', method: 'post', data })
+}
+
+export function queryPayment(orderNo) {
+  return request({ url: '/payment/status/' + encodeURIComponent(orderNo), method: 'get', toast: false })
+}

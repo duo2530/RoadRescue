@@ -25,6 +25,11 @@ import java.math.BigDecimal;
 @SuppressWarnings({"unchecked", "rawtypes"})
 public class OrderInfoController {
 
+    @PostMapping("/preparePayment/{orderNo}/{customerId}")
+    public Result<OrderPayVo> preparePayment(@PathVariable String orderNo, @PathVariable Long customerId) {
+        return Result.ok(orderInfoService.preparePayment(orderNo, customerId));
+    }
+
     @Autowired
     private OrderInfoService orderInfoService;
 

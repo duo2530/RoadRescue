@@ -27,6 +27,7 @@ public class GuiguLoginAspect {
     //切入点表达式：指定对哪些规则的方法进行增强
     @Around("execution(* com.atguigu.daijia.*.controller.*.*(..)) && @annotation(guiguLogin)")
     public Object login(ProceedingJoinPoint proceedingJoinPoint,GuiguLogin guiguLogin)  throws Throwable {
+        AuthContextHolder.removeUserId();
 
         //1 获取request对象
         RequestAttributes attributes = RequestContextHolder.getRequestAttributes();
@@ -46,12 +47,12 @@ public class GuiguLoginAspect {
                            .get(RedisConstant.USER_LOGIN_KEY_PREFIX+token);
 
         //5 查询redis对应用户id，把用户id放到ThreadLocal里面
-        if(StringUtils.hasText(customerId)) {
-            AuthContextHolder.setUserId(Long.parseLong(customerId));
-        }
+        if (!StringUtils.hasText(customerId)) throw new GuiguException(ResultCodeEnum.LOGIN_AUTH);
+        AuthContextHolder.setUserId(Long.parseLong(customerId));
 
         //6 执行业务方法
-        return proceedingJoinPoint.proceed();
+        try { return proceedingJoinPoint.proceed(); }
+        finally { AuthContextHolder.removeUserId(); }
     }
 
 }
