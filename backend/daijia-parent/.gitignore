@@ -12,3 +12,9 @@ target/
 application.properties
 rebel.xml
 test/
+!web/web-customer/src/test/
+!web/web-driver/src/test/
+!service/service-map/src/test/
+!service/service-dispatch/src/test/
+!service/service-order/src/test/
+!service/service-payment/src/test/

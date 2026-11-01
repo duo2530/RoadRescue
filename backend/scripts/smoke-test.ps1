@@ -92,6 +92,10 @@ Step 'POST /customer-api/order/submitOrder' {
         endPointLongitude   = 116.315520
         endPointLatitude    = 39.976970
         favourFee           = 0
+        remark              = (@{
+            serviceType = 'tow'; carType = '9座以下（含9座）客车'; position = '地面'
+            plate = '京B8K6T9'; phone = '13000000000'
+        } | ConvertTo-Json -Compress)
     }
     $r = CallApi 'POST' "$Gateway/customer-api/order/submitOrder" $custToken $body
     if ($r.code -ne 200) { throw "code=$($r.code) msg=$($r.message)" }

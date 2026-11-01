@@ -1,5 +1,6 @@
 import { getDb, saveDb } from './db'
 import { SERVICES, getService, calcPrice } from './services'
+import { validateOrder } from '../utils/order-validation'
 
 /**
  * 前端 mock 路由。入参与 uni.request 一致，返回 { code, msg, data }。
@@ -98,13 +99,10 @@ route('POST', '/order/estimate', ({ data }) => {
 
 // ---------- 订单 ----------
 route('POST', '/order', ({ data }) => {
-  const db = getDb()
   const service = getService(data.serviceType)
-  if (!service) return fail('服务类型错误')
-  if (!data.startAddress) return fail('请选择救援地点')
-  if (service.needDestination && !data.endAddress) return fail('请选择拖车终点')
-  if (!data.plate) return fail('请选择车牌号')
-  if (!/^1\d{10}$/.test(data.phone || '')) return fail('请输入正确的联系电话')
+  const error = validateOrder(data, service)
+  if (error) return fail(error)
+  const db = getDb()
   if (db.orders.some(o => ONGOING.includes(refreshStatus(o).status))) {
     return fail('您有进行中的救援服务，请勿重复下单')
   }

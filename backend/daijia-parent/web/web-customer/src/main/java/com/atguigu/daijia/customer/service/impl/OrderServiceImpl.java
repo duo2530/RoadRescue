@@ -97,6 +97,8 @@ public class OrderServiceImpl implements OrderService {
     // //乘客下单
     @Override
     public Long submitOrder(SubmitOrderForm submitOrderForm) {
+        // 在算路、落库和派单之前校验，防止绕过页面直接提交不完整订单。
+        RescueOrderValidator.validate(submitOrderForm);
         //1 重新计算驾驶线路
         CalculateDrivingLineForm calculateDrivingLineForm = new CalculateDrivingLineForm();
         BeanUtils.copyProperties(submitOrderForm,calculateDrivingLineForm);

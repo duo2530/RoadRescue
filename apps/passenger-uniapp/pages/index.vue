@@ -188,6 +188,7 @@
   import { useUserStore } from '@/store'
   import { listService } from '@/api/service'
   import { estimate, createOrder } from '@/api/order'
+  import { validateOrder } from '@/utils/order-validation'
   import { reverseGeocode, drivingRoute, straightDistance } from '@/utils/qqmap'
   import { AGREEMENT_TEXT, GUARANTEE_TEXT } from '@/utils/texts'
 
@@ -406,12 +407,7 @@
   // ---------- 下单 ----------
   function submit() {
     if (submitting.value) return
-    if (current.value.needDestination && !endAddress.value) {
-      uni.showToast({ title: '请选择拖车终点', icon: 'none' })
-      return
-    }
-    submitting.value = true
-    createOrder({
+    const data = {
       serviceType: current.value.type,
       startAddress: startAddress.value,
       endAddress: endAddress.value,
@@ -420,7 +416,14 @@
       position: form.position,
       plate: form.plate,
       phone: form.phone
-    }).then(order => {
+    }
+    const error = validateOrder(data, current.value)
+    if (error) {
+      uni.showToast({ title: error, icon: 'none' })
+      return
+    }
+    submitting.value = true
+    createOrder(data).then(order => {
       uni.showToast({ title: '下单成功', icon: 'success' })
       setTimeout(() => {
         uni.navigateTo({ url: '/pages/order/detail?id=' + order.id })

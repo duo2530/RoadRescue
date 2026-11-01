@@ -18,6 +18,7 @@ import config from '@/config'
 import { getToken } from '@/utils/auth'
 import mockRequest from './index'
 import { getService, calcPrice } from './services'
+import { validateOrder } from '../utils/order-validation'
 
 const ok = data => ({ code: 200, msg: 'success', data })
 
@@ -104,7 +105,8 @@ const handlers = [
   ['POST', /^\/logout$/, () => Promise.resolve(ok(null))],
   ['POST', /^\/order$/, ({ data }) => {
     const service = getService(data.serviceType)
-    if (!service) return Promise.resolve({ code: 500, msg: '服务类型错误' })
+    const error = validateOrder(data, service)
+    if (error) return Promise.resolve({ code: 500, msg: error })
     const remark = JSON.stringify({
       serviceType: data.serviceType,
       carType: data.carType,
