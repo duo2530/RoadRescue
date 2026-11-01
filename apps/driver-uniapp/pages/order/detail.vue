@@ -2,6 +2,11 @@
   <view class="page">
     <zd-nav-bar title="订单详情"></zd-nav-bar>
 
+    <view v-if="loadError" class="card">
+      <text>{{ loadError }}</text>
+      <view class="nav-btn" @click="load">重新加载</view>
+    </view>
+
     <view v-if="order" class="content">
       <view class="status-card">
         <text class="status-title">{{ statusTitle }}</text>
@@ -67,14 +72,14 @@
     </view>
 
     <view v-if="order && actions.length" class="footer">
-      <view v-for="a in actions" :key="a.text" class="footer-btn" :class="a.type" @click="a.handler">{{ a.text }}</view>
+      <view v-for="a in actions" :key="a.text" class="footer-btn" :class="a.type" @click="a.handler">{{ grabbing ? '抢单中…' : a.text }}</view>
     </view>
   </view>
 </template>
 
 <script setup>
   import { ref, computed } from 'vue'
-  import { onLoad, onShow, onUnload } from '@dcloudio/uni-app'
+  import { onLoad, onShow, onHide, onUnload } from '@dcloudio/uni-app'
   import { getOrder, grabOrder, departOrder, finishOrder, cancelOrder } from '@/api/order'
   import { serviceName, money, formatTime } from '@/utils/format'
   import { CODE_AUTH_REQUIRED } from '@/mock'
@@ -88,24 +93,46 @@
 
   const id = ref('')
   const order = ref(null)
+  const loadError = ref('')
+  const grabbing = ref(false)
   let timer = null
+  let loading = false
+  let loadVersion = 0
+
+  function stopPolling() {
+    clearInterval(timer)
+    timer = null
+  }
 
   onLoad(options => {
     id.value = options.id
   })
   onShow(() => {
+    stopPolling()
     load()
     // 运费审核中时轮询，审核通过后自动刷新
     timer = setInterval(() => {
       if (order.value && order.value.myStatus === 'finished' && !order.value.audited) load()
     }, 5000)
   })
-  onUnload(() => clearInterval(timer))
+  onHide(stopPolling)
+  onUnload(stopPolling)
 
   function load() {
+    if (loading) return Promise.resolve()
+    loading = true
+    const version = ++loadVersion
     return getOrder(id.value).then(data => {
+      if (version !== loadVersion) return
       order.value = data
-    })
+      loadError.value = ''
+    }).catch(error => {
+      if (version !== loadVersion) return
+      order.value = null
+      loadError.value = error && error.code === 205
+        ? '订单已失效或已由其他司机承接，请返回大厅刷新'
+        : (error && error.msg) || '订单加载失败，请重试'
+    }).finally(() => { loading = false })
   }
 
   const stepIndex = computed(() => {
@@ -157,9 +184,12 @@
   }
 
   function grab() {
-    grabOrder(id.value).then(() => {
+    if (grabbing.value) return
+    grabbing.value = true
+    ++loadVersion
+    return grabOrder(id.value).then(data => {
+      order.value = data
       uni.showToast({ title: '抢单成功', icon: 'success' })
-      load()
     }).catch(res => {
       if (res && res.code === CODE_AUTH_REQUIRED) {
         uni.showModal({
@@ -170,9 +200,9 @@
         })
       } else {
         uni.showToast({ title: (res && res.msg) || '抢单失败', icon: 'none' })
-        load()
+        return load()
       }
-    })
+    }).finally(() => { grabbing.value = false })
   }
 
   function cancel() {

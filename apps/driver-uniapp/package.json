@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
+    "test:hall-orders": "node scripts/test-hall-orders.cjs",
     "dev:h5": "node scripts/uni.js",
     "build:h5": "node scripts/uni.js build",
     "dev:mp-weixin": "node scripts/uni.js -p mp-weixin",

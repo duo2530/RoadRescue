@@ -38,6 +38,9 @@ public class OrderInfoVo {
 	@Schema(description = "订单状态")
 	private Integer status;
 
+	@Schema(description = "是否为当前司机已接订单（司机端详情）")
+	private Boolean mine;
+
 	@Schema(description = "创建时间")
 	private Date createTime;
 

@@ -1,7 +1,6 @@
 package com.atguigu.daijia.map.service.impl;
 
 import com.atguigu.daijia.common.constant.RedisConstant;
-import com.atguigu.daijia.common.constant.SystemConstant;
 import com.atguigu.daijia.common.result.Result;
 import com.atguigu.daijia.common.util.LocationUtil;
 import com.atguigu.daijia.driver.client.DriverInfoFeignClient;
@@ -21,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.bson.types.ObjectId;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.geo.*;
@@ -43,6 +43,10 @@ import java.util.List;
 @Service
 @SuppressWarnings({"unchecked", "rawtypes"})
 public class LocationServiceImpl implements LocationService {
+
+    // 先按平台范围搜索，再按每位司机的接单距离筛选；覆盖大厅最大 100 公里选项。
+    @Value("${zhongdao.dispatch.search-radius-km:100}")
+    private double searchRadiusKm = 100;
 
     @Autowired
     private RedisTemplate redisTemplate;
@@ -82,14 +86,13 @@ public class LocationServiceImpl implements LocationService {
     //搜索附近满足条件的司机
     @Override
     public List<NearByDriverVo> searchNearByDriver(SearchNearByDriverForm searchNearByDriverForm) {
-        //搜索经纬度位置5公里以内的司机
+        //搜索平台派单范围内的司机
         //1 操作redis里面geo
         //创建point，经纬度位置
         Point point = new Point(searchNearByDriverForm.getLongitude().doubleValue(),
                 searchNearByDriverForm.getLatitude().doubleValue());
 
-        //定义距离，5公里
-        Distance distance = new Distance(SystemConstant.NEARBY_DRIVER_RADIUS,
+        Distance distance = new Distance(searchRadiusKm,
                                RedisGeoCommands.DistanceUnit.KILOMETERS);
 
         //创建circle对象，point  distance

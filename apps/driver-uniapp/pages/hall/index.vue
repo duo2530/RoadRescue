@@ -123,7 +123,7 @@
 
 <script setup>
   import { ref, computed } from 'vue'
-  import { onShow, onPullDownRefresh } from '@dcloudio/uni-app'
+  import { onShow, onHide, onUnload, onPullDownRefresh } from '@dcloudio/uni-app'
   import { listHallOrders, grabOrder } from '@/api/order'
   import { useUserStore } from '@/store'
   import { getLocation } from '@/utils/location'
@@ -166,21 +166,40 @@
     return publishWithin.value ? opt.label : '发布时间'
   })
 
+  let refreshTimer = null
+  let loading = false
+  let visible = false
+
+  function stopRefreshing() {
+    visible = false
+    clearInterval(refreshTimer)
+    refreshTimer = null
+  }
+
   onShow(() => {
+    stopRefreshing()
+    visible = true
     userStore.ensureLogin().then(() => {
       userStore.fetchInfo()
       return getLocation()
     }).then(loc => {
+      if (!visible) return
       location.value = loc
-      reload()
+      refreshTimer = setInterval(() => reload().catch(() => {}), 5000)
+      return reload()
     }).catch(() => {})
   })
 
+  onHide(stopRefreshing)
+  onUnload(stopRefreshing)
+
   onPullDownRefresh(() => {
-    reload().finally(() => uni.stopPullDownRefresh())
+    reload().catch(() => {}).finally(() => uni.stopPullDownRefresh())
   })
 
   function reload(manual) {
+    if (loading) return Promise.resolve()
+    loading = true
     if (manual) {
       spinning.value = true
       setTimeout(() => (spinning.value = false), 600)
@@ -197,7 +216,7 @@
       list.value = data
       loaded.value = true
       if (manual) uni.showToast({ title: '已刷新', icon: 'none' })
-    })
+    }).finally(() => { loading = false })
   }
 
   function switchScope(key) {

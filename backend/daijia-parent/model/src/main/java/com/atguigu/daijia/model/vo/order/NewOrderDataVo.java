@@ -18,6 +18,14 @@ public class NewOrderDataVo {
 	@Schema(description = "结束地点")
 	private String endLocation;
 
+	private BigDecimal startPointLatitude;
+	private BigDecimal startPointLongitude;
+	private BigDecimal endPointLatitude;
+	private BigDecimal endPointLongitude;
+
+	@Schema(description = "救援业务信息(JSON)")
+	private String remark;
+
 	@Schema(description = "预估订单金额")
 	private BigDecimal expectAmount;
 

@@ -1,8 +1,11 @@
 package com.atguigu.daijia.driver.service.impl;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.atguigu.daijia.common.constant.SystemConstant;
 import com.atguigu.daijia.common.execption.GuiguException;
 import com.atguigu.daijia.common.result.ResultCodeEnum;
+import com.atguigu.daijia.common.result.Result;
 import com.atguigu.daijia.common.util.LocationUtil;
 import com.atguigu.daijia.dispatch.client.NewOrderFeignClient;
 import com.atguigu.daijia.driver.service.OrderService;
@@ -41,6 +44,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 @Slf4j
@@ -320,12 +324,34 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public List<NewOrderDataVo> findNewOrderQueueData(Long driverId) {
-        return newOrderFeignClient.findNewOrderQueueData(driverId).getData();
+        List<NewOrderDataVo> orders = newOrderFeignClient.findNewOrderQueueData(driverId).getData();
+        if (orders == null) return List.of();
+        orders.forEach(order -> order.setRemark(hideContact(order.getRemark())));
+        return orders;
+    }
+
+    private String hideContact(String remark) {
+        if (remark == null) return null;
+        try {
+            JSONObject extra = JSON.parseObject(remark);
+            if (extra == null) return null;
+            extra.remove("phone");
+            return extra.toJSONString();
+        } catch (RuntimeException e) {
+            return null;
+        }
     }
 
     @Override
     public Boolean robNewOrder(Long driverId, Long orderId) {
-        return orderInfoFeignClient.robNewOrder(driverId,orderId).getData();
+        Result<Boolean> result = orderInfoFeignClient.robNewOrder(driverId, orderId);
+        if (!Integer.valueOf(200).equals(result.getCode())) {
+            throw new GuiguException(result.getCode(), result.getMessage());
+        }
+        if (!Boolean.TRUE.equals(result.getData())) {
+            throw new GuiguException(217, "抢单未成功，请刷新后重试");
+        }
+        return true;
     }
 
     @Override
@@ -336,8 +362,17 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public OrderInfoVo getOrderInfo(Long orderId, Long driverId) {
         OrderInfo orderInfo = orderInfoFeignClient.getOrderInfo(orderId).getData();
-        if(orderInfo.getDriverId() != driverId) {
+        if (orderInfo == null || driverId == null) {
             throw new GuiguException(ResultCodeEnum.ILLEGAL_REQUEST);
+        }
+        boolean mine = Objects.equals(orderInfo.getDriverId(), driverId);
+        if (!mine) {
+            // 待抢单详情仅对收到该订单派单的司机开放。
+            if (orderInfo.getDriverId() != null
+                    || !OrderStatus.WAITING_ACCEPT.getStatus().equals(orderInfo.getStatus())
+                    || findNewOrderQueueData(driverId).stream().noneMatch(o -> Objects.equals(o.getOrderId(), orderId))) {
+                throw new GuiguException(ResultCodeEnum.ILLEGAL_REQUEST);
+            }
         }
 
         //获取账单和分账数据，封装到vo里面
@@ -355,6 +390,8 @@ public class OrderServiceImpl implements OrderService {
         OrderInfoVo orderInfoVo = new OrderInfoVo();
         orderInfoVo.setOrderId(orderId);
         BeanUtils.copyProperties(orderInfo,orderInfoVo);
+        orderInfoVo.setMine(mine);
+        if (!mine) orderInfoVo.setRemark(hideContact(orderInfoVo.getRemark()));
         orderInfoVo.setOrderBillVo(orderBillVo);
         orderInfoVo.setOrderProfitsharingVo(orderProfitsharingVo);
         return orderInfoVo;

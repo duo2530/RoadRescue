@@ -134,21 +134,33 @@ const handlers = [
     return local
   })],
   ['GET', /^\/hall\/orders$/, ({ query }) => {
-    // 先上报位置（未开启接单时后端返回“未开启代驾服务”，忽略即可），再拉取派单队列
+    // 上报失败时返回具体原因，避免把未开启接单等错误伪装成“暂无订单”。
     const loc = { latitude: Number(query.latitude), longitude: Number(query.longitude) }
-    return call('POST', '/location/updateDriverLocation', loc).catch(() => null)
-      .then(() => call('GET', '/order/findNewOrderQueueData'))
-      .then(r => (r.code === 200 ? ok((r.data || []).map(o => toOrder(o, false))) : r))
+    return call('POST', '/location/updateDriverLocation', loc)
+      .then(r => r.code === 200 ? call('GET', '/order/findNewOrderQueueData') : r)
+      .then(r => {
+        if (r.code !== 200) return r
+        const orders = (r.data || []).filter(o => {
+          if (query.scope !== 'nearby') return true
+          return o.distance != null && Number(o.distance) <= Number(query.radius || 10)
+        })
+        return ok(orders.map(o => toOrder(o, false)))
+      })
   }],
   ['POST', /^\/hall\/orders\/(\d+)\/grab$/, ({ match }) => call('GET', '/order/robNewOrder/' + match[1]).then(r => {
     if (r.code !== 200) return { code: r.code, msg: r.msg || '手慢了，订单已被抢走' }
-    return call('GET', '/order/getOrderInfo/' + match[1]).then(d => (d.code === 200 ? ok(toOrder(d.data, true)) : d))
+    if (r.data !== true) return { code: 217, msg: '抢单未成功，请刷新后重试' }
+    return call('GET', '/order/getOrderInfo/' + match[1]).then(d => {
+      if (d.code !== 200) return d
+      if (d.data.mine !== true) return { code: 217, msg: '订单归属尚未确认，请刷新后重试' }
+      return ok(toOrder(d.data, true))
+    })
   })],
   ['GET', /^\/my\/orders$/, ({ query }) => myOrders().then(r => {
     if (r.code !== 200 || !query.status) return r
     return ok(r.data.filter(o => o.myStatus === query.status))
   })],
-  ['GET', /^\/my\/orders\/(\d+)$/, ({ match }) => call('GET', '/order/getOrderInfo/' + match[1]).then(r => (r.code === 200 ? ok(toOrder(r.data, true)) : r))],
+  ['GET', /^\/my\/orders\/(\d+)$/, ({ match }) => call('GET', '/order/getOrderInfo/' + match[1]).then(r => (r.code === 200 ? ok(toOrder(r.data, r.data.mine === true)) : r))],
   ['POST', /^\/my\/orders\/(\d+)\/depart$/, ({ match }) => {
     const id = match[1]
     // 救援车到达现场 -> 确认车辆 -> 开始救援；到达校验要求司机位置在起点 1 公里内，先把订单位置缓存为起点

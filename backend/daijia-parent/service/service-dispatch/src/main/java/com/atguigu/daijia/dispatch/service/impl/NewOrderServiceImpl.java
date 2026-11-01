@@ -7,6 +7,7 @@ import com.atguigu.daijia.dispatch.service.NewOrderService;
 import com.atguigu.daijia.dispatch.xxl.client.XxlJobClient;
 import com.atguigu.daijia.map.client.LocationFeignClient;
 import com.atguigu.daijia.model.entity.dispatch.OrderJob;
+import com.atguigu.daijia.model.entity.order.OrderInfo;
 import com.atguigu.daijia.model.enums.OrderStatus;
 import com.atguigu.daijia.model.form.map.SearchNearByDriverForm;
 import com.atguigu.daijia.model.vo.dispatch.NewOrderTaskVo;
@@ -16,6 +17,7 @@ import com.atguigu.daijia.order.client.OrderInfoFeignClient;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.BeanUtils;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -139,8 +141,8 @@ public class NewOrderServiceImpl implements NewOrderService {
                 //新订单保存司机的临时队列，Redis里面List集合
                 String key = RedisConstant.DRIVER_ORDER_TEMP_LIST+driver.getDriverId();
                 redisTemplate.opsForList().leftPush(key,JSONObject.toJSONString(newOrderDataVo));
-                //过期时间：1分钟
-                redisTemplate.expire(key,1, TimeUnit.MINUTES);
+                // 与去重记录保持相同有效期，避免消息先过期却仍禁止再次推送。
+                redisTemplate.expire(key, RedisConstant.DRIVER_ORDER_REPEAT_LIST_EXPIRES_TIME, TimeUnit.MINUTES);
             }
         });
     }
@@ -150,26 +152,20 @@ public class NewOrderServiceImpl implements NewOrderService {
     public List<NewOrderDataVo> findNewOrderQueueData(Long driverId) {
         List<NewOrderDataVo> list = new ArrayList<>();
         String key = RedisConstant.DRIVER_ORDER_TEMP_LIST + driverId;
-        long size = redisTemplate.opsForList().size(key);
-        if(size > 0) {
-            for(int i=0; i<size; i++) {
-                String content = (String)redisTemplate.opsForList().leftPop(key);
-                NewOrderDataVo newOrderDataVo = JSONObject.parseObject(content, NewOrderDataVo.class);
-                list.add(newOrderDataVo);
+        List<String> contents = redisTemplate.opsForList().range(key, 0, -1);
+        if (contents == null) return list;
+        for (String content : contents) {
+            NewOrderDataVo data = JSONObject.parseObject(content, NewOrderDataVo.class);
+            OrderInfo order = orderInfoFeignClient.getOrderInfo(data.getOrderId()).getData();
+            if (order == null || !OrderStatus.WAITING_ACCEPT.getStatus().equals(order.getStatus())) {
+                redisTemplate.opsForList().remove(key, 1, content);
+                continue;
             }
+            // 返回快照而非消费消息；同时补齐真实救援信息和坐标供大厅展示。
+            BeanUtils.copyProperties(order, data);
+            list.add(data);
         }
         return list;
-//        List<NewOrderDataVo> list = new ArrayList<>();
-//        String key = RedisConstant.DRIVER_ORDER_TEMP_LIST + driverId;
-//        Long size = redisTemplate.opsForList().size(key);
-//        if(size > 0) {
-//            for (int i = 0; i < size; i++) {
-//                String content = (String)redisTemplate.opsForList().leftPop(key);
-//                NewOrderDataVo newOrderDataVo = JSONObject.parseObject(content,NewOrderDataVo.class);
-//                list.add(newOrderDataVo);
-//            }
-//        }
-//        return list;
     }
 
     //清空队列数据
