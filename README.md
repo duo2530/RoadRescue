@@ -2,6 +2,8 @@
 
 道路救援全栈面试作品：乘客端 + 救援司机端（uni-app）+ PC 调度管理端（Vue 3），后端基于乐尚代驾 Spring Cloud 微服务改造。
 
+使用步骤见 [操作手册](docs/操作手册.md)，实拍截图位于 `docs/image/`；支付配置见 [支付宝沙箱支付](docs/alipay-sandbox.md)。
+
 - 乘客端、司机端沿用「中道救援」Mock 版 UI。`VITE_API_MODE=real` 时经适配层接入真实后端，后端没有的能力回落到本地 mock。
 - 管理端是新写的，对接 `web-mgr`（`/mgr-api`），包含登录、数据看板、订单、司机审核、乘客、系统用户/角色/菜单。
 - 后端链路已用真实数据跑通：乘客下单 → XXL-JOB 派单到附近司机 → 司机抢单（Redisson 锁）→ 到达 → 验车 → 开始救援 → 上传轨迹（MongoDB）→ 结束救援，Drools 计费与分账。
@@ -83,7 +85,10 @@ XXL-JOB 控制台 http://localhost:8080/xxl-job-admin：需要确认派单任务
 - 乘客取消订单：`/order/cancelOrder/{orderId}`，校验订单归属，且只允许取消待接单的单。
 - 救援信息透传：`SubmitOrderForm`、`OrderInfoVo`、`OrderListVo` 增加 `remark`，Mapper 查询带出。
 - Bug 修复：`LocationServiceImpl.calculateOrderRealDistance` 把米当成公里计费（18667 公里 → 9 万多元），改为换算成公里并保留两位小数。
-- 派单：演示司机的 `order_distance=0`（不限里程）、`accept_distance=50`。救援单通常比代驾单远，原来的 5 公里限制会把订单过滤掉。
+- 派单：平台搜索范围由 `zhongdao.dispatch.search-radius-km` 配置，默认 100 公里，再按司机的 `order_distance` 和 `accept_distance` 筛选。演示司机不限订单里程、接单距离为 50 公里；大厅“附近订单”还会按所选 10/30/50/100 公里范围过滤。
+- 司机大厅每 5 秒刷新派单快照；查询不会清空待接单订单，已接单或取消的订单会移除。队列有效期与派单去重记录均为 16 分钟，返回数据包含救援类型、价格和坐标。
+- 司机详情允许收到派单的司机预览待抢单订单，联系方式在接单后返回；其他司机已接订单仍禁止访问。详情的 `mine` 字段区分待抢单与当前司机已接订单。
+- 抢单按订单独立加锁，并以数据库“待接单且未分配司机”的条件更新确认归属；Redis 接单标记按订单隔离。司机接口会透传抢单失败，成功后详情立即切换为“待发车”。
 - 字符集：`daijia.sql` 开头补 `SET NAMES utf8mb4`，避免导入时中文被双重编码。
 - 密钥：`common-account.yaml` 改成从环境变量读取，删除支付私钥 pem；`scripts/load-env.cmd` 在启动时加载 `backend/.env`。
 
@@ -97,8 +102,8 @@ XXL-JOB 控制台 http://localhost:8080/xxl-job-admin：需要确认派单任务
 
 ## 已知缺口
 
-- 微信登录、微信支付没有接入，H5 用演示登录代替；支付流程未测试。
-- 费用预估在前端按救援一口价和里程计算，后端 Drools 仍按代驾规则生成 `expectAmount`，两套口径不同。
+- H5 已接入支付宝网页沙箱支付；配置及联调见 [支付宝沙箱支付](docs/alipay-sandbox.md)。小程序真实微信支付接口预留且关闭，H5 登录仍使用演示账号。
+- 救援报价和结算统一由服务端计算；结束服务进入待付款，支付宝通知验签或服务端主动查询确认后才更新为已付款。支付宝分账尚未接入。
 - `order_info` 没有救援专用字段（服务类型、车型、车牌），暂存在 `remark` JSON 里。
 - 乘客端的车辆、服务项目、兑换码，以及司机端的短信、分级认证、钱包流水，仍走本地 mock。
 - 司机端「取消接单」没有对应后端接口，real 模式下提示联系调度改派。
