@@ -9,6 +9,8 @@ export default defineConfig(({ mode }) => {
     plugins: [vue()],
     server: {
       port: 9527,
+      // 允许通过 Tailscale serve 的 HTTPS 域名访问
+      allowedHosts: ['.ts.net'],
       proxy: {
         '/mgr-api': { target: gateway, changeOrigin: true }
       }
