@@ -34,6 +34,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.Date;
 
 @Slf4j
@@ -144,7 +146,7 @@ public class DriverInfoServiceImpl extends ServiceImpl<DriverInfoMapper, DriverI
         driverAuthInfoVo.setDriverLicenseFrontShowUrl(cosService.getImageUrl(driverAuthInfoVo.getDriverLicenseFrontUrl()));
         driverAuthInfoVo.setDriverLicenseBackShowUrl(cosService.getImageUrl(driverAuthInfoVo.getDriverLicenseBackUrl()));
         driverAuthInfoVo.setDriverLicenseHandShowUrl(cosService.getImageUrl(driverAuthInfoVo.getDriverLicenseHandUrl()));
-
+        //policyPhotoUrl 是 dataURL 或已是完整 URL，不能走 COS 签名，直接返回库里的值
         return driverAuthInfoVo;
     }
 
@@ -154,14 +156,45 @@ public class DriverInfoServiceImpl extends ServiceImpl<DriverInfoMapper, DriverI
         //获取司机id
         Long driverId = updateDriverAuthInfoForm.getDriverId();
 
-        //修改操作
+        //只有带了保单字段才校验，个人信息、驾驶证的更新保持原行为
+        if (hasPolicyField(updateDriverAuthInfoForm)) {
+            validatePolicy(updateDriverAuthInfoForm);
+        }
+
+        //修改操作，BeanUtils 会拷入 null，但 updateById 默认跳过 null 字段，未提交的保单不会被清空
         DriverInfo driverInfo = new DriverInfo();
         driverInfo.setId(driverId);
         BeanUtils.copyProperties(updateDriverAuthInfoForm,driverInfo);
 
-//        int i = driverInfoMapper.updateById(driverInfo);
         boolean update = this.updateById(driverInfo);
         return update;
+    }
+
+    private boolean hasPolicyField(UpdateDriverAuthInfoForm form) {
+        return form.getPolicyNo() != null
+                || form.getPolicyPhotoUrl() != null
+                || form.getPolicyExpireDate() != null;
+    }
+
+    //保单字段要齐全且有效。到期日按东八区取“今天”，服务器时区是 UTC 时午夜前后会判错
+    private void validatePolicy(UpdateDriverAuthInfoForm form) {
+        String policyNo = form.getPolicyNo();
+        if (!StringUtils.hasText(policyNo)) {
+            throw new GuiguException(ResultCodeEnum.ARGUMENT_VALID_ERROR.getCode(), "保单号不能为空");
+        }
+        if (policyNo.length() > 50) {
+            throw new GuiguException(ResultCodeEnum.ARGUMENT_VALID_ERROR.getCode(), "保单号不能超过50个字符");
+        }
+        if (!StringUtils.hasText(form.getPolicyPhotoUrl())) {
+            throw new GuiguException(ResultCodeEnum.ARGUMENT_VALID_ERROR.getCode(), "请上传责任险保单照片");
+        }
+        LocalDate expireDate = form.getPolicyExpireDate();
+        if (expireDate == null) {
+            throw new GuiguException(ResultCodeEnum.ARGUMENT_VALID_ERROR.getCode(), "请填写保单到期日");
+        }
+        if (expireDate.isBefore(LocalDate.now(ZoneId.of("Asia/Shanghai")))) {
+            throw new GuiguException(ResultCodeEnum.ARGUMENT_VALID_ERROR.getCode(), "责任险保单已过期，请更换有效保单");
+        }
     }
 
     //创建司机人脸模型

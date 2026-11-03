@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
+import java.time.LocalDate;
 import java.util.Date;
 
 @Data
@@ -78,4 +79,13 @@ public class UpdateDriverAuthInfoForm {
 
     @Schema(description = "紧急联系人关系")
     private String contactRelationship;
+
+    @Schema(description = "责任险保单号，与其他保单字段一起提交时必填，最长50字符")
+    private String policyNo;
+
+    @Schema(description = "责任险保单照片，dataURL或对象存储URL")
+    private String policyPhotoUrl;
+
+    @Schema(description = "责任险保单到期日 yyyy-MM-dd，不早于今天")
+    private LocalDate policyExpireDate;
 }

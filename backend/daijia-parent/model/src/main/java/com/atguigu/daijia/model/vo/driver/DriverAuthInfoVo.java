@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
+import java.time.LocalDate;
 import java.util.Date;
 
 @Data
@@ -84,4 +85,13 @@ public class DriverAuthInfoVo {
 
     @Schema(description = "紧急联系人关系")
     private String contactRelationship;
+
+    @Schema(description = "责任险保单号")
+    private String policyNo;
+
+    @Schema(description = "责任险保单照片，原样返回库里的值（dataURL或完整URL），不做COS签名")
+    private String policyPhotoUrl;
+
+    @Schema(description = "责任险保单到期日")
+    private LocalDate policyExpireDate;
 }

@@ -105,6 +105,10 @@ function myOrders() {
   })
 }
 
+function fromRemotePolicy(d) {
+  return { policyPhoto: d.policyPhotoUrl || '', policyNo: d.policyNo, expireDate: d.policyExpireDate ? String(d.policyExpireDate).slice(0, 10) : '' }
+}
+
 const handlers = [
   ['POST', /^\/login$/, () => call('GET', '/driver/demoLogin').then(r => (r.code === 200 ? ok({ token: r.data }) : r))],
   ['POST', /^\/logout$/, () => Promise.resolve(ok(null))],
@@ -127,11 +131,26 @@ const handlers = [
       auth: authed ? (local.data.auth || []).map(a => ({ ...a, done: true })) : local.data.auth
     })
   })],
-  ['GET', /^\/auth\/status$/, () => Promise.all([call('GET', '/driver/getDriverLoginInfo'), localMock({ url: '/auth/status', method: 'GET' })]).then(([info, local]) => {
+  ['GET', /^\/auth\/status$/, () => Promise.all([call('GET', '/driver/getDriverLoginInfo'), call('GET', '/driver/getDriverAuthInfo'), localMock({ url: '/auth/status', method: 'GET' })]).then(([info, remote, local]) => {
+    const insurance = remote.code === 200 && remote.data && remote.data.policyNo ? fromRemotePolicy(remote.data) : null
+    const data = { ...local.data, ...(insurance ? { insurance } : {}) }
     if (info.code === 200 && info.data.authStatus === 2) {
-      return ok({ ...local.data, steps: local.data.steps.map(s => ({ ...s, done: true })) })
+      return ok({ data, steps: local.data.steps.map(s => ({ ...s, done: true })) })
     }
-    return local
+    return ok({ data, steps: local.data.steps.map(s => (s.key === 'insurance' && insurance ? { ...s, done: true } : s)) })
+  })],
+  ['POST', /^\/auth\/insurance$/, ({ data }) => call('GET', '/driver/getDriverLoginInfo').then(info => {
+    const authed = info.code === 200 && info.data.authStatus === 2
+    const submit = () => call('POST', '/driver/updateDriverAuthInfo', {
+      policyNo: data.policyNo,
+      policyPhotoUrl: data.policyPhoto,
+      policyExpireDate: data.expireDate
+    })
+    if (authed) {
+      return submit().then(r => (r.code === 200 ? ok({}) : r))
+    }
+    // 个人信息、车辆资料仍在本地 mock：先过本地的顺序和必填校验，再写后端
+    return localMock({ url: '/auth/insurance', method: 'POST', data }).then(r => (r.code !== 200 ? r : submit().then(s => (s.code === 200 ? r : s))))
   })],
   ['GET', /^\/hall\/orders$/, ({ query }) => {
     // 上报失败时返回具体原因，避免把未开启接单等错误伪装成“暂无订单”。

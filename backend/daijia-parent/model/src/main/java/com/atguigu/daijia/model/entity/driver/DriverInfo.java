@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.Date;
 
 @Data
@@ -111,6 +112,18 @@ public class DriverInfo extends BaseEntity {
     @Schema(description = "腾讯云人脸模型id")
 	@TableField("face_model_id")
 	private String faceModelId;
+
+    @Schema(description = "责任险保单号")
+	@TableField("policy_no")
+	private String policyNo;
+
+    @Schema(description = "责任险保单照片，演示版为压缩后的dataURL（约40-100KB），线上为对象存储URL，故用MEDIUMTEXT")
+	@TableField("policy_photo_url")
+	private String policyPhotoUrl;
+
+    @Schema(description = "责任险保单到期日")
+	@TableField("policy_expire_date")
+	private LocalDate policyExpireDate;
 
 	@Schema(description = "司机工号")
 	@TableField("job_no")

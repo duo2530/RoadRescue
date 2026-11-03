@@ -67,6 +67,10 @@ public class DriverServiceImpl implements DriverService {
     @Override
     public Boolean updateDriverAuthInfo(UpdateDriverAuthInfoForm updateDriverAuthInfoForm) {
         Result<Boolean> booleanResult = driverInfoFeignClient.UpdateDriverAuthInfo(updateDriverAuthInfoForm);
+        //service-driver 校验失败时返回业务码与中文提示，这里要透传，否则调用方只会看到 200 和 null
+        if (!ResultCodeEnum.SUCCESS.getCode().equals(booleanResult.getCode())) {
+            throw new GuiguException(booleanResult.getCode(), booleanResult.getMessage());
+        }
         Boolean data = booleanResult.getData();
         return data;
     }
