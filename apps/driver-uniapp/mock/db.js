@@ -12,8 +12,8 @@ const MIN = 60 * 1000
 const HOUR = 60 * MIN
 const DAY = 24 * HOUR
 
-// 演示账号（手机号为占位号）
-export const DEMO_PHONE = '13800138000'
+// 演示账号：与后端演示数据中司机 ID 1 的手机号一致，用它登录即为已认证的演示司机
+export const DEMO_PHONE = '13800000002'
 
 // 里程按直线距离 × 1.3 估算（与用户端路线规划失败时的降级口径一致）
 export function estimateMileage(from, to) {

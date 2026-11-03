@@ -8,6 +8,7 @@
 - `phone-login-customer` 乘客端手机号验证码登录（登录页），未注册手机号自动注册。
 - `demo-driver` 司机演示 token，对应 driver_id=1。
 - `demo-driver-ui` 司机端登录页用演示账号登录。
+- `phone-login-driver` 司机端手机号验证码登录，未注册手机号自动注册为未认证司机（同时建 driver_set、driver_account）。
 
 ## How to get to it (user POV)
 
@@ -26,6 +27,7 @@ Preconditions:
 - **Use the token.** `curl -s http://127.0.0.1:8600/customer-api/customer/getCustomerLoginInfo -H "token: <token>"`，`code` 为 200 且带昵称。不带或用错 token 返回 `code 208 未登陆`。
 - **Customer phone login.** 先 `POST /customer-api/customer/sms/send`，body `{"phone":"<11位手机号>"}`，返回“演示验证码：123456”；再 `POST /customer-api/customer/loginByPhone`，body `{"phone":"…","code":"123456"}`，返回 token。60 秒内重发 code 201，错误验证码 215，连错 5 次验证码作废。中文 body 在 Windows 用 `python -X utf8` 发送，不要用 curl 直发。
 - **Customer login page.** `agent-browser open http://localhost:9090/#/pages/login`，`eval` 读文字包含“登录/注册”“手机号快捷登录”。退出按钮的确认弹窗里“确定”不是 ARIA 元素，用 `eval` 找叶子节点文字为“确定”的元素 `click()`。
+- **Driver phone login.** `POST /driver-api/driver/sms/send` body `{"phone":"…"}`，再 `POST /driver-api/driver/loginByPhone` body `{"phone":"…","code":"123456"}`，规则与乘客端一致。用 token 调 `GET /driver-api/driver/getDriverLoginInfo` 核对 `id`：演示手机号为 1，新手机号为新 id 且 `authStatus` 为 0。司机登录页的 setup 状态里有 `phone`、`code`、`agreed`，可经 `__vueParentComponent` 写入后点 `.btn`。验证后删除新司机的 driver_info、driver_set、driver_account 行。
 - **Driver token.** `curl -s http://127.0.0.1:8600/driver-api/driver/demoLogin`，格式同上。
 - **Driver login page.** `agent-browser open http://localhost:9091/#/pages/login`，`eval 'document.body.innerText'` 包含“道路救援司机端”“订单又多又好，接单就上道路救援”“登录”“演示账号”。
 

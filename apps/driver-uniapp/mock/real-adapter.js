@@ -3,7 +3,8 @@
  * 这里把 Mock 路由翻译成乐尚代驾 web-driver 接口（经网关 /driver-api），并转换返回结构。
  *
  * 对照：
- *   POST /login                     -> GET  /driver/demoLogin（H5 演示登录；小程序端应改为 /driver/login/{wx.login code}）
+ *   POST /sms/code                  -> POST /driver/sms/send
+ *   POST /login                     -> POST /driver/loginByPhone（手机号验证码登录，未注册自动注册）
  *   GET  /driver/info               -> GET  /driver/getDriverLoginInfo + /order/findDriverOrderPage（统计）
  *   GET  /hall/orders               -> POST /location/updateDriverLocation + GET /order/findNewOrderQueueData（派单队列）
  *   POST /hall/orders/:id/grab      -> GET  /order/robNewOrder/{id}（Redisson 分布式锁抢单）
@@ -11,11 +12,12 @@
  *   GET  /my/orders/:id             -> GET  /order/getOrderInfo/{id}
  *   POST /my/orders/:id/depart      -> GET  /order/driverArriveStartLocation/{id} + POST /order/updateOrderCart + POST /order/startDrive
  *   POST /my/orders/:id/finish      -> POST /order/endDrive
- * 后端没有的能力（短信、分级认证、钱包流水）继续走本地 mock。
+ * 后端没有的能力（分级认证的个人信息与车辆资料、钱包流水）继续走本地 mock。
  */
 import config from '@/config'
 import { getToken } from '@/utils/auth'
 import mockRequest from './index'
+import { getDb, saveDb, resetDb } from './db'
 import { SERVICE_NAMES } from './rules'
 
 const ok = data => ({ code: 200, msg: 'success', data })
@@ -110,7 +112,15 @@ function fromRemotePolicy(d) {
 }
 
 const handlers = [
-  ['POST', /^\/login$/, () => call('GET', '/driver/demoLogin').then(r => (r.code === 200 ? ok({ token: r.data }) : r))],
+  ['POST', /^\/sms\/code$/, ({ data }) => call('POST', '/driver/sms/send', { phone: data.phone }).then(r => (r.code === 200 ? ok({ hint: r.data }) : r))],
+  ['POST', /^\/login$/, ({ data }) => call('POST', '/driver/loginByPhone', { phone: data.phone, code: data.code }).then(r => {
+    if (r.code !== 200) return r
+    // 本地 mock 里的认证资料和钱包流水不区分司机，换手机号登录时重置，避免新司机沿用上一个人的资料
+    if (getDb().driver.phone !== data.phone) resetDb()
+    getDb().driver.phone = data.phone
+    saveDb()
+    return ok({ token: r.data })
+  })],
   ['POST', /^\/logout$/, () => Promise.resolve(ok(null))],
   ['GET', /^\/driver\/info$/, () => Promise.all([call('GET', '/driver/getDriverLoginInfo'), myOrders(), localMock({ url: '/driver/info', method: 'GET' })]).then(([info, mine, local]) => {
     if (info.code !== 200) return info
