@@ -8,10 +8,10 @@
  *   POST /order            -> POST /order/submitOrder（落库 + XXL-JOB 派单）
  *   GET  /order/list       -> GET  /order/findCustomerOrderPage/1/50
  *   GET  /order/:id        -> GET  /order/getOrderInfo/{id}
- *   POST /order/:id/cancel -> GET  /order/cancelOrder/{id}（中道救援新增，仅待接单可取消）
+ *   POST /order/:id/cancel -> GET  /order/cancelOrder/{id}（道路救援新增，仅待接单可取消）
  *   GET  /coupon/list      -> GET  /coupon/findNoUsePage | findUsedPage
  * 后端没有的能力（车辆、服务项目、兑换码）继续走本地 mock；
- * 费用预估按中道救援一口价/里程规则在前端计算（乐尚代驾 Drools 规则是代驾计费，口径不同），
+ * 费用预估按道路救援一口价/里程规则在前端计算（乐尚代驾 Drools 规则是代驾计费，口径不同），
  * 下单后后端仍会用 Drools 生成 expectAmount，救援价存于 remark.price。
  */
 import config from '@/config'

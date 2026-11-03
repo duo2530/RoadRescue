@@ -1,8 +1,8 @@
 <template>
   <view class="page">
     <view class="hero" :style="{ paddingTop: statusBarHeight + 'px' }">
-      <text class="hero-title">中道救援司机端</text>
-      <text class="hero-sub">订单又多又好，接单就上中道</text>
+      <text class="hero-title">道路救援司机端</text>
+      <text class="hero-sub">订单又多又好，接单就上道路救援</text>
     </view>
 
     <view class="card">

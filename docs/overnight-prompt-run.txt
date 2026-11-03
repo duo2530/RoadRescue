@@ -1,8 +1,8 @@
 IMPORTANT: Confirm you are Opus kiro/claude-opus-5-5. Owner wants Opus5. No AskUserQuestion.
 
-你是夜间无人值守的 Claude Code。工作目录必须是 D:\\Projects\\IDEAProjects\\zhongdao-rescue。
+你是夜间无人值守的 Claude Code。工作目录必须是 D:\\Projects\\IDEAProjects\\RoadRescue。
 
-【任务】创建面试作品「中道救援」：用中道救援 Mock 的用户端+司机端 UI，对接乐尚代驾(atguigu-daijia) 后端域能力，并新建 PC 管理端。Owner 已睡，禁止 AskUserQuestion，自行决策。
+【任务】创建面试作品「道路救援」：用道路救援 Mock 的用户端+司机端 UI，对接乐尚代驾(atguigu-daijia) 后端域能力，并新建 PC 管理端。Owner 已睡，禁止 AskUserQuestion，自行决策。
 
 【只读源】
 - Mock: D:\\Projects\\ClaudeProjects\\中道救援mock （uni-app, driver-uni-app）
@@ -14,9 +14,9 @@ IMPORTANT: Confirm you are Opus kiro/claude-opus-5-5. Owner wants Opus5. No AskU
 【必须做】
 1) 搭目录：backend（拷贝适配 daijia-parent+infra+scripts+sql）、apps/passenger-uniapp、apps/driver-uniapp、apps/admin-web（Vue3+Vite+Element Plus）、evidence/agent-browser、README、.gitignore、LICENSE(MIT ok)
 2) admin-web 对接现有 web-mgr（/mgr-api）：登录、看板、订单、司机、乘客、系统用户/角色（至少能演示）
-3) 两端 uni-app 保留 Mock UI；配置可切真实 API；品牌文案改为中道救援
+3) 两端 uni-app 保留 Mock UI；配置可切真实 API；品牌文案改为道路救援
 4) 能启动则启动依赖+必要服务；用 agent-browser 截关键页 PNG 到 evidence/agent-browser/（admin/passenger/driver）；尽量清掉登录过期遮罩
-5) 完成后：gh repo create zhongdao-rescue --private --source=. --remote=origin --push（若名冲突换 zhongdao-rescue-portfolio）；duo2530 已 gh auth
+5) 完成后：gh repo create RoadRescue --private --source=. --remote=origin --push（若名冲突换 RoadRescue-portfolio）；duo2530 已 gh auth
 6) 最终在对话里汇总：完成项、截图路径、缺口、卡住次数
 
 【权限】已 --dangerously-skip-permissions。可用 robocopy/git/npm/mvn/docker/agent-browser/gh。

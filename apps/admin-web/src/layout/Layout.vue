@@ -3,7 +3,7 @@
     <el-aside width="220px" class="aside">
       <div class="brand">
         <span class="logo">中</span>
-        <span>中道救援 · 调度平台</span>
+        <span>道路救援 · 调度平台</span>
       </div>
       <el-menu :default-active="active" router background-color="#0f2a4a" text-color="#c8d3e0" active-text-color="#fff">
         <el-menu-item v-for="r in mainMenus" :key="r.path" :index="'/' + r.path">

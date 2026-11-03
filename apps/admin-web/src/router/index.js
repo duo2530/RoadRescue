@@ -21,7 +21,7 @@ const router = createRouter({
 })
 
 router.beforeEach(to => {
-  document.title = `${to.meta.title || ''} · 中道救援管理平台`
+  document.title = `${to.meta.title || ''} · 道路救援管理平台`
   const token = localStorage.getItem(TOKEN_KEY)
   if (to.path !== '/login' && !token) return '/login'
   if (to.path === '/login' && token) return '/dashboard'

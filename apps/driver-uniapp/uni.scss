@@ -61,7 +61,7 @@ $uni-font-size-title:20px;
 $uni-color-subtitle: #555555; // 二级标题颜色
 $uni-font-size-subtitle:26px;
 $uni-color-paragraph: #3F536E; // 文章段落颜色
-$uni-font-size-paragraph:15px;/* 中道救援司机端：设计稿按 390pt 宽（截图 1170px ÷ 3）标注，r(pt) 换算为 rpx */
+$uni-font-size-paragraph:15px;/* 道路救援司机端：设计稿按 390pt 宽（截图 1170px ÷ 3）标注，r(pt) 换算为 rpx */
 @function r($pt) {
   @return $pt * 1.923077rpx;
 }

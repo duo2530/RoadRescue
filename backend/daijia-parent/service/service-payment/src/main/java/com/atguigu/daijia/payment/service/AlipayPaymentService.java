@@ -73,7 +73,7 @@ public class AlipayPaymentService {
                 record = new PaymentInfo();
                 record.setOrderNo(order.getOrderNo());
                 record.setAmount(order.getPayAmount().setScale(2, java.math.RoundingMode.UNNECESSARY));
-                record.setContent("中道救援服务费（支付宝沙箱）");
+                record.setContent("道路救援服务费（支付宝沙箱）");
                 record.setPayWay(ALIPAY);
                 record.setPaymentStatus(0);
                 mapper.insert(record);

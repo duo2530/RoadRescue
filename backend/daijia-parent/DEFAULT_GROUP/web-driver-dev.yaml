@@ -38,8 +38,8 @@ spring:
 seata:
   tx-service-group: daijia_tx_group
   enable-auto-data-source-proxy: false
-# 中道救援 H5 演示登录（/customer/demoLogin、/driver/demoLogin），生产环境改为 false
-zhongdao:
+# 道路救援 H5 演示登录（/customer/demoLogin、/driver/demoLogin），生产环境改为 false
+roadrescue:
   demo-login:
     enabled: true
     customer-id: 1

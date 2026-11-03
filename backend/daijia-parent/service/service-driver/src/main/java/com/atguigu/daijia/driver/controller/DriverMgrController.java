@@ -14,7 +14,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * 中道救援管理端：司机(救援师傅)查询与审核接口，供 web-mgr 调用
+ * 道路救援管理端：司机(救援师傅)查询与审核接口，供 web-mgr 调用
  */
 @Tag(name = "管理端司机接口")
 @RestController

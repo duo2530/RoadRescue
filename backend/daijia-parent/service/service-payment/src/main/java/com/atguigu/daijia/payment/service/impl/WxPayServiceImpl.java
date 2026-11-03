@@ -39,7 +39,7 @@ import java.math.BigDecimal;
 import java.util.Date;
 
 @Service
-@ConditionalOnProperty(name = "zhongdao.payment.wechat.enabled", havingValue = "true")
+@ConditionalOnProperty(name = "roadrescue.payment.wechat.enabled", havingValue = "true")
 @Slf4j
 public class WxPayServiceImpl implements WxPayService {
 

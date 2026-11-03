@@ -1,5 +1,5 @@
 {
-    "name" : "中道救援司机端",
+    "name" : "道路救援司机端",
     "appid" : "__UNI__25A9D80",
     "description" : "",
     "versionName" : "1.2.0",
@@ -62,7 +62,7 @@
             "port" : 9091,
             "https" : false
         },
-        "title" : "中道救援司机端",
+        "title" : "道路救援司机端",
         "router" : {
             "mode" : "hash",
             "base" : "/"

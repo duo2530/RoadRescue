@@ -52,7 +52,7 @@ public class AlipayGateway {
             AlipayTradeWapPayModel model = new AlipayTradeWapPayModel();
             model.setOutTradeNo(orderNo);
             model.setTotalAmount(amount.toPlainString());
-            model.setSubject("中道救援服务费（沙箱）");
+            model.setSubject("道路救援服务费（沙箱）");
             model.setProductCode("QUICK_WAP_WAY");
             request.setBizModel(model);
             if (StringUtils.hasText(properties.getNotifyUrl())) request.setNotifyUrl(properties.getNotifyUrl());

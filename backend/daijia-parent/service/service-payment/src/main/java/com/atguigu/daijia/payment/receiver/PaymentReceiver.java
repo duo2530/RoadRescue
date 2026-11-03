@@ -14,7 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
-@ConditionalOnProperty(name = "zhongdao.payment.wechat.enabled", havingValue = "true")
+@ConditionalOnProperty(name = "roadrescue.payment.wechat.enabled", havingValue = "true")
 public class PaymentReceiver {
 
     @Autowired

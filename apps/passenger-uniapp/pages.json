@@ -2,7 +2,7 @@
   "pages": [{
     "path": "pages/index",
     "style": {
-      "navigationBarTitleText": "中道救援",
+      "navigationBarTitleText": "道路救援",
       "navigationStyle": "custom"
     }
   }, {
@@ -50,7 +50,7 @@
   }],
   "globalStyle": {
     "navigationBarTextStyle": "black",
-    "navigationBarTitleText": "中道救援",
+    "navigationBarTitleText": "道路救援",
     "navigationBarBackgroundColor": "#FFFFFF",
     "backgroundColor": "#F6F7F8"
   }

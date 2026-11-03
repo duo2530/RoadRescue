@@ -17,7 +17,7 @@ export default {
   defaultLocation: { latitude: 31.221517, longitude: 121.544379, city: '上海市' },
   // 应用信息
   appInfo: {
-    name: '中道救援司机端',
+    name: '道路救援司机端',
     version: '1.0.0',
     // 客服电话
     servicePhone: '021-66898194'

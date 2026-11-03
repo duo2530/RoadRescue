@@ -44,7 +44,7 @@ public class OrderInfoVo {
 	@Schema(description = "创建时间")
 	private Date createTime;
 
-	@Schema(description = "中道救援业务信息(JSON)")
+	@Schema(description = "道路救援业务信息(JSON)")
 	private String remark;
 
 	@Schema(description = "订单账单信息")

@@ -2,7 +2,7 @@
   <div class="login-page">
     <div class="panel">
       <div class="intro">
-        <h1>中道救援</h1>
+        <h1>道路救援</h1>
         <p>道路救援调度管理平台</p>
         <ul>
           <li>救援工单全流程跟踪</li>

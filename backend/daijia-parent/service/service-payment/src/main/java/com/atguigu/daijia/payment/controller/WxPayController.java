@@ -18,7 +18,7 @@ import java.util.Map;
 
 @Tag(name = "微信支付接口")
 @RestController
-@ConditionalOnProperty(name = "zhongdao.payment.wechat.enabled", havingValue = "true")
+@ConditionalOnProperty(name = "roadrescue.payment.wechat.enabled", havingValue = "true")
 @RequestMapping("payment/wxPay")
 @Slf4j
 public class WxPayController {

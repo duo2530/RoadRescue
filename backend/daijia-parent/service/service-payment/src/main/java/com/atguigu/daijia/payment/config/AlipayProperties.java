@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 
 @Data
 @Component
-@ConfigurationProperties(prefix = "zhongdao.payment.alipay")
+@ConfigurationProperties(prefix = "roadrescue.payment.alipay")
 public class AlipayProperties {
     private boolean enabled;
     private String gatewayUrl = "https://openapi-sandbox.dl.alipaydev.com/gateway.do";

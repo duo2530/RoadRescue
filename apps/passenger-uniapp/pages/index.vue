@@ -175,7 +175,7 @@
       </view>
       <view class="agreement">
         <text>请您阅读并同意</text>
-        <text class="link" @click="openText('中道救援服务协议', agreementText)">中道救援服务协议</text>
+        <text class="link" @click="openText('道路救援服务协议', agreementText)">道路救援服务协议</text>
       </view>
     </view>
   </view>

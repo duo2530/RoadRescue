@@ -45,7 +45,7 @@ import java.util.List;
 public class LocationServiceImpl implements LocationService {
 
     // 先按平台范围搜索，再按每位司机的接单距离筛选；覆盖大厅最大 100 公里选项。
-    @Value("${zhongdao.dispatch.search-radius-km:100}")
+    @Value("${roadrescue.dispatch.search-radius-km:100}")
     private double searchRadiusKm = 100;
 
     @Autowired

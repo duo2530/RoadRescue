@@ -16,20 +16,20 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 /**
- * 中道救援 H5 演示登录：浏览器里拿不到 wx.login 的 code，直接为配置的演示乘客签发 token。
- * 仅当 zhongdao.demo-login.enabled=true 时注册，生产环境不要打开。
+ * 道路救援 H5 演示登录：浏览器里拿不到 wx.login 的 code，直接为配置的演示乘客签发 token。
+ * 仅当 roadrescue.demo-login.enabled=true 时注册，生产环境不要打开。
  */
 @Tag(name = "演示登录(仅本地)")
 @RestController
 @RequestMapping("/customer")
-@ConditionalOnProperty(prefix = "zhongdao.demo-login", name = "enabled", havingValue = "true")
+@ConditionalOnProperty(prefix = "roadrescue.demo-login", name = "enabled", havingValue = "true")
 @SuppressWarnings({"unchecked", "rawtypes"})
 public class DemoLoginController {
 
     @Autowired
     private RedisTemplate redisTemplate;
 
-    @Value("${zhongdao.demo-login.customer-id:1}")
+    @Value("${roadrescue.demo-login.customer-id:1}")
     private Long demoCustomerId;
 
     @Operation(summary = "H5 演示登录")

@@ -32,7 +32,7 @@ public class SubmitOrderForm {
     @Schema(description = "顾客好处费")
     private BigDecimal favourFee = new BigDecimal(0);
 
-    @Schema(description = "中道救援业务信息(JSON)：服务类型、车型、车辆位置、车牌、联系电话")
+    @Schema(description = "道路救援业务信息(JSON)：服务类型、车型、车辆位置、车牌、联系电话")
     private String remark;
 
 }

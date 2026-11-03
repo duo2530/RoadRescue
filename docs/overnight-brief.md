@@ -1,7 +1,7 @@
-# 中道救援 overnight brief（调研 + 实施计划）
+# 道路救援 overnight brief（调研 + 实施计划）
 
 ## 目标
-面试作品：道路救援（中道救援）全栈项目，落在 D:\Projects\IDEAProjects\zhongdao-rescue。
+面试作品：道路救援（道路救援）全栈项目，落在 D:\Projects\IDEAProjects\RoadRescue。
 
 ## 素材（只读参考，勿改原仓作为交付）
 1. UI Mock：D:\Projects\ClaudeProjects\中道救援mock
@@ -27,7 +27,7 @@
 
 ## 推荐目录
 `
-zhongdao-rescue/
+RoadRescue/
   README.md
   LICENSE
   docs/overnight-brief.md          # 本文件，可增补
@@ -48,7 +48,7 @@ P2 agent-browser：admin 登录后关键页、乘客 H5、司机 H5 截图到 ev
 P2 gh repo create **private** 推送（账号 duo2530 已登录）
 
 ## 硬约束
-- 不要改写原 mock / atguigu-daijia 作为交付；只在 zhongdao-rescue 内改
+- 不要改写原 mock / atguigu-daijia 作为交付；只在 RoadRescue 内改
 - 密钥进 .env.example，不进 git（.env、私钥、WX 商户密钥）
 - 不要 AskUserQuestion；合理默认
 - 卡住满 3 次：提交已有进度并 private push

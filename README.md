@@ -1,10 +1,10 @@
-﻿# 中道救援 (Zhongdao Rescue)
+﻿# 道路救援 (Road Rescue)
 
 道路救援全栈面试作品：乘客端 + 救援司机端（uni-app）+ PC 调度管理端（Vue 3），后端基于乐尚代驾 Spring Cloud 微服务改造。
 
 使用步骤见 [操作手册](docs/操作手册.md)，实拍截图位于 `docs/image/`；支付配置见 [支付宝沙箱支付](docs/alipay-sandbox.md)。
 
-- 乘客端、司机端沿用「中道救援」Mock 版 UI。`VITE_API_MODE=real` 时经适配层接入真实后端，后端没有的能力回落到本地 mock。
+- 乘客端、司机端沿用「道路救援」Mock 版 UI。`VITE_API_MODE=real` 时经适配层接入真实后端，后端没有的能力回落到本地 mock。
 - 管理端是新写的，对接 `web-mgr`（`/mgr-api`），包含登录、数据看板、订单、司机审核、乘客、系统用户/角色/菜单。
 - 后端链路已用真实数据跑通：乘客下单 → XXL-JOB 派单到附近司机 → 司机抢单（Redisson 锁）→ 到达 → 验车 → 开始救援 → 上传轨迹（MongoDB）→ 结束救援，Drools 计费与分账。
 
@@ -62,7 +62,7 @@ XXL-JOB 控制台 http://localhost:8080/xxl-job-admin：需要确认派单任务
 | 乘客端 | 打开即自动演示登录（`/customer/demoLogin` → customer_id=1） |
 | 司机端 | 登录页点「演示账号」填入后登录（real 模式走 `/driver/demoLogin` → driver_id=1） |
 
-演示登录只在 Nacos 配置 `zhongdao.demo-login.enabled=true` 时注册，用来替代 H5 无法调用的 `wx.login`。
+演示登录只在 Nacos 配置 `roadrescue.demo-login.enabled=true` 时注册，用来替代 H5 无法调用的 `wx.login`。
 
 ## 前端 → 后端接口对照
 
@@ -85,7 +85,7 @@ XXL-JOB 控制台 http://localhost:8080/xxl-job-admin：需要确认派单任务
 - 乘客取消订单：`/order/cancelOrder/{orderId}`，校验订单归属，且只允许取消待接单的单。
 - 救援信息透传：`SubmitOrderForm`、`OrderInfoVo`、`OrderListVo` 增加 `remark`，Mapper 查询带出。
 - Bug 修复：`LocationServiceImpl.calculateOrderRealDistance` 把米当成公里计费（18667 公里 → 9 万多元），改为换算成公里并保留两位小数。
-- 派单：平台搜索范围由 `zhongdao.dispatch.search-radius-km` 配置，默认 100 公里，再按司机的 `order_distance` 和 `accept_distance` 筛选。演示司机不限订单里程、接单距离为 50 公里；大厅“附近订单”还会按所选 10/30/50/100 公里范围过滤。
+- 派单：平台搜索范围由 `roadrescue.dispatch.search-radius-km` 配置，默认 100 公里，再按司机的 `order_distance` 和 `accept_distance` 筛选。演示司机不限订单里程、接单距离为 50 公里；大厅“附近订单”还会按所选 10/30/50/100 公里范围过滤。
 - 司机大厅每 5 秒刷新派单快照；查询不会清空待接单订单，已接单或取消的订单会移除。队列有效期与派单去重记录均为 16 分钟，返回数据包含救援类型、价格和坐标。
 - 司机详情允许收到派单的司机预览待抢单订单，联系方式在接单后返回；其他司机已接订单仍禁止访问。详情的 `mine` 字段区分待抢单与当前司机已接订单。
 - 抢单按订单独立加锁，并以数据库“待接单且未分配司机”的条件更新确认归属；Redis 接单标记按订单隔离。司机接口会透传抢单失败，成功后详情立即切换为“待发车”。

@@ -15,7 +15,7 @@ export default {
   qqMapKey: import.meta.env.TECENT_MAP_KEY || '',
   // 应用信息
   appInfo: {
-    name: '中道救援',
+    name: '道路救援',
     version: '1.0.0',
     // 客服电话
     servicePhone: '021-66898194'

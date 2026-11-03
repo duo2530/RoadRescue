@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 中道救援管理端：订单(救援工单)查询接口，供 web-mgr 调用
+ * 道路救援管理端：订单(救援工单)查询接口，供 web-mgr 调用
  */
 @Tag(name = "管理端订单接口")
 @RestController
