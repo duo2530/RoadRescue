@@ -4,6 +4,7 @@ import com.atguigu.daijia.common.result.Result;
 import com.atguigu.daijia.driver.service.DriverInfoService;
 import com.atguigu.daijia.model.entity.driver.DriverSet;
 import com.atguigu.daijia.model.form.driver.DriverFaceModelForm;
+import com.atguigu.daijia.model.form.driver.DriverPhoneForm;
 import com.atguigu.daijia.model.form.driver.UpdateDriverAuthInfoForm;
 import com.atguigu.daijia.model.vo.driver.DriverAuthInfoVo;
 import com.atguigu.daijia.model.vo.driver.DriverInfoVo;
@@ -28,6 +29,12 @@ public class DriverInfoController {
     @GetMapping("/login/{code}")
     public Result<Long> login(@PathVariable String code) {
         return Result.ok(driverInfoService.login(code));
+    }
+
+    @Operation(summary = "手机号验证码登录，未注册则自动创建司机")
+    @PostMapping("/loginByPhone")
+    public Result<Long> loginByPhone(@RequestBody DriverPhoneForm driverPhoneForm) {
+        return Result.ok(driverInfoService.loginByPhone(driverPhoneForm.getPhone()));
     }
 
     @Operation(summary = "获取司机登录信息")

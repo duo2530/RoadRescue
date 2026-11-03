@@ -30,7 +30,9 @@ import org.joda.time.DateTime;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.AutoConfigureBefore;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
@@ -66,6 +68,9 @@ public class DriverInfoServiceImpl extends ServiceImpl<DriverInfoMapper, DriverI
 
     @Autowired
     private TencentCloudProperties tencentCloudProperties;
+
+    @Autowired
+    private TransactionTemplate transactionTemplate;
 
     //小程序授权登录
     @Override
@@ -113,6 +118,70 @@ public class DriverInfoServiceImpl extends ServiceImpl<DriverInfoMapper, DriverI
             return driverInfo.getId();
         } catch (WxErrorException e) {
             throw new GuiguException(ResultCodeEnum.DATA_ERROR);
+        }
+    }
+
+    //手机号验证码登录：验证码已由 web-driver 校验，这里只负责查找或创建司机
+    @Override
+    public Long loginByPhone(String phone) {
+        DriverInfo driverInfo = findByPhone(phone);
+        if(driverInfo == null) {
+            driverInfo = createByPhone(phone);
+        }
+
+        //status=2 为禁用账号
+        if(Integer.valueOf(2).equals(driverInfo.getStatus())) {
+            throw new GuiguException(ResultCodeEnum.ACCOUNT_STOP);
+        }
+
+        DriverLoginLog driverLoginLog = new DriverLoginLog();
+        driverLoginLog.setDriverId(driverInfo.getId());
+        driverLoginLog.setMsg("手机号验证码登录");
+        driverLoginLogMapper.insert(driverLoginLog);
+
+        return driverInfo.getId();
+    }
+
+    private DriverInfo findByPhone(String phone) {
+        LambdaQueryWrapper<DriverInfo> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(DriverInfo::getPhone, phone)
+               .orderByAsc(DriverInfo::getId)
+               .last("LIMIT 1");//phone 无唯一索引，历史数据可能重复，取最早的一条避免 selectOne 抛异常
+        return driverInfoMapper.selectOne(wrapper);
+    }
+
+    private DriverInfo createByPhone(String phone) {
+        try {
+            //司机、设置、账户三行要么都建成要么都不建，否则新司机接单或钱包会找不到记录
+            return transactionTemplate.execute(status -> {
+                DriverInfo driverInfo = new DriverInfo();
+                driverInfo.setNickname(String.valueOf(System.currentTimeMillis()));
+                driverInfo.setAvatarUrl("https://oss.aliyuncs.com/aliyun_id_photo_bucket/default_handsome.jpg");
+                driverInfo.setPhone(phone);
+                //wx_open_id 是 NOT NULL 且唯一索引，手机号注册没有微信 openId，用 phone_ 前缀占位
+                driverInfo.setWxOpenId("phone_" + phone);
+                driverInfoMapper.insert(driverInfo);
+
+                DriverSet driverSet = new DriverSet();
+                driverSet.setDriverId(driverInfo.getId());
+                driverSet.setOrderDistance(new BigDecimal(0));//0：无限制
+                driverSet.setAcceptDistance(new BigDecimal(SystemConstant.ACCEPT_DISTANCE));
+                driverSet.setIsAutoAccept(0);
+                driverSetMapper.insert(driverSet);
+
+                DriverAccount driverAccount = new DriverAccount();
+                driverAccount.setDriverId(driverInfo.getId());
+                driverAccountMapper.insert(driverAccount);
+                return driverInfo;
+            });
+        } catch (DuplicateKeyException e) {
+            //同一手机号并发注册时另一个请求已插入，唯一索引拦截后改为读取已有记录。
+            //重查必须在事务回滚之后，可重复读事务内的快照看不到对方刚提交的行
+            DriverInfo existing = findByPhone(phone);
+            if(existing == null) {
+                throw e;
+            }
+            return existing;
         }
     }
 

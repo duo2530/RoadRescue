@@ -1,12 +1,19 @@
 package com.atguigu.daijia.driver.service;
 
 import com.atguigu.daijia.model.form.driver.DriverFaceModelForm;
+import com.atguigu.daijia.model.form.driver.DriverPhoneLoginForm;
 import com.atguigu.daijia.model.form.driver.UpdateDriverAuthInfoForm;
 import com.atguigu.daijia.model.vo.driver.DriverAuthInfoVo;
 
 public interface DriverService {
 
     String login(String code);
+
+    //发送手机验证码，返回提示文案
+    String sendSmsCode(String phone);
+
+    //手机号验证码登录，返回 token
+    String loginByPhone(DriverPhoneLoginForm form);
 
     //司机认证信息
     DriverAuthInfoVo getDriverAuthInfo(Long driverId);

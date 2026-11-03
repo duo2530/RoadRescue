@@ -3,6 +3,7 @@ package com.atguigu.daijia.driver.client;
 import com.atguigu.daijia.common.result.Result;
 import com.atguigu.daijia.model.entity.driver.DriverSet;
 import com.atguigu.daijia.model.form.driver.DriverFaceModelForm;
+import com.atguigu.daijia.model.form.driver.DriverPhoneForm;
 import com.atguigu.daijia.model.form.driver.UpdateDriverAuthInfoForm;
 import com.atguigu.daijia.model.vo.driver.DriverAuthInfoVo;
 import com.atguigu.daijia.model.vo.driver.DriverInfoVo;
@@ -31,6 +32,12 @@ public interface DriverInfoFeignClient {
      */
     @GetMapping("/driver/info/login/{code}")
     Result<Long> login(@PathVariable("code") String code);
+
+    /**
+     * 手机号验证码登录，未注册则自动创建司机
+     */
+    @PostMapping("/driver/info/loginByPhone")
+    Result<Long> loginByPhone(@RequestBody DriverPhoneForm driverPhoneForm);
 
     /**
      * 获取司机登录信息

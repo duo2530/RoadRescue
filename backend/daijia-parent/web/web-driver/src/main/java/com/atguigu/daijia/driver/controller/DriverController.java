@@ -6,6 +6,8 @@ import com.atguigu.daijia.common.util.AuthContextHolder;
 import com.atguigu.daijia.driver.client.DriverInfoFeignClient;
 import com.atguigu.daijia.driver.service.DriverService;
 import com.atguigu.daijia.model.form.driver.DriverFaceModelForm;
+import com.atguigu.daijia.model.form.driver.DriverPhoneForm;
+import com.atguigu.daijia.model.form.driver.DriverPhoneLoginForm;
 import com.atguigu.daijia.model.form.driver.UpdateDriverAuthInfoForm;
 import com.atguigu.daijia.model.vo.driver.DriverAuthInfoVo;
 import com.atguigu.daijia.model.vo.driver.DriverLoginVo;
@@ -32,6 +34,20 @@ public class DriverController {
     @GetMapping("/login/{code}")
     public Result<String> login(@PathVariable String code) {
         return Result.ok(driverService.login(code));
+    }
+
+    //登录前调用，不加 @GuiguLogin
+    @Operation(summary = "发送手机验证码")
+    @PostMapping("/sms/send")
+    public Result<String> sendSmsCode(@RequestBody DriverPhoneForm driverPhoneForm) {
+        return Result.ok(driverService.sendSmsCode(driverPhoneForm.getPhone()));
+    }
+
+    //登录前调用，不加 @GuiguLogin
+    @Operation(summary = "手机号验证码登录")
+    @PostMapping("/loginByPhone")
+    public Result<String> loginByPhone(@RequestBody DriverPhoneLoginForm driverPhoneLoginForm) {
+        return Result.ok(driverService.loginByPhone(driverPhoneLoginForm));
     }
 
     @Operation(summary = "获取司机登录信息")

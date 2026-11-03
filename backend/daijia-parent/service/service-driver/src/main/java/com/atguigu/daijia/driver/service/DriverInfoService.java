@@ -14,6 +14,9 @@ public interface DriverInfoService extends IService<DriverInfo> {
     //小程序授权登录
     Long login(String code);
 
+    //手机号验证码登录，手机号未注册则自动创建司机
+    Long loginByPhone(String phone);
+
     //获取司机登录信息
     DriverLoginVo getDriverInfo(Long driverId);
 
