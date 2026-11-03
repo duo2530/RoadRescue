@@ -189,7 +189,7 @@
   import { listService } from '@/api/service'
   import { estimate, createOrder } from '@/api/order'
   import { validateOrder } from '@/utils/order-validation'
-  import { reverseGeocode, drivingRoute, straightDistance } from '@/utils/qqmap'
+  import { reverseGeocode, drivingRoute, straightDistance, fromGps } from '@/utils/qqmap'
   import { AGREEMENT_TEXT, GUARANTEE_TEXT } from '@/utils/texts'
 
   // 默认定位：芈展服务园（与截图一致），浏览器定位成功后替换
@@ -284,13 +284,34 @@
   }
 
   // ---------- 定位与选点 ----------
+  const useDefault = () => setStart(DEFAULT_LOCATION.latitude, DEFAULT_LOCATION.longitude, true)
+
   function locate() {
+    // #ifdef H5
+    // uni.getLocation 在 H5 定位失败时会静默改用 IP 定位（只到区县），这里直接用浏览器定位并提示失败原因
+    if (!window.isSecureContext || !navigator.geolocation) {
+      uni.showToast({ title: '当前页面不是 https，无法获取定位', icon: 'none', duration: 3000 })
+      return useDefault()
+    }
+    const reasons = { 1: '定位权限被拒绝，请在系统设置中允许浏览器定位', 2: '暂时无法获取位置信号', 3: '定位超时' }
+    navigator.geolocation.getCurrentPosition(
+      pos => fromGps(pos.coords.latitude, pos.coords.longitude)
+        .catch(() => pos.coords)
+        .then(c => setStart(c.latitude, c.longitude, true)),
+      err => {
+        uni.showToast({ title: reasons[err.code] || '定位失败', icon: 'none', duration: 3000 })
+        useDefault()
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+    )
+    // #endif
+    // #ifndef H5
     uni.getLocation({
       type: 'gcj02',
       success: res => setStart(res.latitude, res.longitude, true),
-      // 浏览器拒绝定位或非 https 时使用默认位置
-      fail: () => setStart(DEFAULT_LOCATION.latitude, DEFAULT_LOCATION.longitude, true)
+      fail: useDefault
     })
+    // #endif
   }
 
   function relocate() {

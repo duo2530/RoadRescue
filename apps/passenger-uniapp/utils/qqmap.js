@@ -37,8 +37,14 @@ function call(path, params) {
   // #endif
   return p.then(res => {
     if (res.status !== 0) throw new Error(res.message)
-    return res.result
+    return res.result || res
   })
+}
+
+/** 浏览器 GPS 坐标（WGS84）转腾讯地图坐标（GCJ02） */
+export function fromGps(latitude, longitude) {
+  return call('/coord/v1/translate/', { locations: latitude + ',' + longitude, type: 1 })
+    .then(res => ({ latitude: res.locations[0].lat, longitude: res.locations[0].lng }))
 }
 
 /** 逆地址解析：坐标 -> { name, address, latitude, longitude } */
