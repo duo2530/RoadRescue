@@ -3,7 +3,8 @@
  * 这里把 Mock 路由翻译成乐尚代驾 web-customer 接口（经网关 /customer-api），并把返回值转换成页面需要的结构。
  *
  * 对照：
- *   POST /login            -> GET  /customer/demoLogin（H5 演示登录；小程序端应改为 /customer/login/{wx.login code}）
+ *   POST /sms/code         -> POST /customer/sms/send
+ *   POST /login            -> POST /customer/loginByPhone（手机号 + 验证码，未注册自动注册）
  *   GET  /user/info        -> GET  /customer/getCustomerLoginInfo
  *   POST /order            -> POST /order/submitOrder（落库 + XXL-JOB 派单）
  *   GET  /order/list       -> GET  /order/findCustomerOrderPage/1/50
@@ -102,9 +103,10 @@ function points(data) {
 }
 
 const handlers = [
-  ['POST', /^\/login$/, () => call('GET', '/customer/demoLogin').then(r => (r.code === 200 ? ok({ token: r.data }) : r))],
+  ['POST', /^\/sms\/code$/, ({ data }) => call('POST', '/customer/sms/send', { phone: data.phone }).then(r => (r.code === 200 ? ok({ hint: r.data }) : r))],
+  ['POST', /^\/login$/, ({ data }) => call('POST', '/customer/loginByPhone', { phone: data.phone, code: data.code }).then(r => (r.code === 200 ? ok({ token: r.data }) : r))],
   ['GET', /^\/user\/info$/, () => call('GET', '/customer/getCustomerLoginInfo').then(r =>
-    r.code === 200 ? ok({ userId: null, phone: '', nickname: r.data.nickname, avatar: r.data.avatarUrl }) : r)],
+    r.code === 200 ? ok({ userId: null, phone: r.data.phone || '', nickname: r.data.nickname, avatar: r.data.avatarUrl }) : r)],
   ['POST', /^\/logout$/, () => Promise.resolve(ok(null))],
   ['POST', /^\/order$/, ({ data }) => {
     const service = getService(data.serviceType)

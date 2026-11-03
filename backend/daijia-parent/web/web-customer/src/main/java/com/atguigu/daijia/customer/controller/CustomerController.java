@@ -8,6 +8,8 @@ import com.atguigu.daijia.common.result.ResultCodeEnum;
 import com.atguigu.daijia.common.util.AuthContextHolder;
 import com.atguigu.daijia.customer.client.CustomerInfoFeignClient;
 import com.atguigu.daijia.customer.service.CustomerService;
+import com.atguigu.daijia.model.form.customer.CustomerPhoneForm;
+import com.atguigu.daijia.model.form.customer.PhoneLoginForm;
 import com.atguigu.daijia.model.form.customer.UpdateWxPhoneForm;
 import com.atguigu.daijia.model.vo.customer.CustomerLoginVo;
 import io.swagger.v3.oas.annotations.Operation;
@@ -62,6 +64,20 @@ public class CustomerController {
     @GetMapping("/login/{code}")
     public Result<String> wxLogin(@PathVariable String code) {
         return Result.ok(customerInfoService.login(code));
+    }
+
+    //登录前调用，不加 @GuiguLogin
+    @Operation(summary = "发送手机验证码")
+    @PostMapping("/sms/send")
+    public Result<String> sendSmsCode(@RequestBody CustomerPhoneForm customerPhoneForm) {
+        return Result.ok(customerInfoService.sendSmsCode(customerPhoneForm.getPhone()));
+    }
+
+    //登录前调用，不加 @GuiguLogin
+    @Operation(summary = "手机号验证码登录")
+    @PostMapping("/loginByPhone")
+    public Result<String> loginByPhone(@RequestBody PhoneLoginForm phoneLoginForm) {
+        return Result.ok(customerInfoService.loginByPhone(phoneLoginForm));
     }
 
     @Operation(summary = "更新用户微信手机号")

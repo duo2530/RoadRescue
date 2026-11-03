@@ -5,6 +5,10 @@
 const DB_KEY = 'zd_mock_db'
 const DB_VERSION = 1
 
+// 演示登录账号：与后端演示乘客（customer_id=1）的手机号一致，验证码固定
+export const DEMO_PHONE = '13800000001'
+export const DEMO_SMS_CODE = '123456'
+
 const DAY = 24 * 3600 * 1000
 
 function seed() {

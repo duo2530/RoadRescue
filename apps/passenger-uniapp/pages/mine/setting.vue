@@ -31,9 +31,8 @@
       content: '确定退出登录吗？',
       success: res => {
         if (!res.confirm) return
-        // 演示版：清除登录态后回到首页，首页会自动重新登录
         useUserStore().logOut().then(() => {
-          uni.reLaunch({ url: '/pages/index' })
+          uni.reLaunch({ url: '/pages/login' })
         })
       }
     })

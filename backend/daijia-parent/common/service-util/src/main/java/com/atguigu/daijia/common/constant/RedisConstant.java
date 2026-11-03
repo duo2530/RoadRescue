@@ -8,6 +8,14 @@ public class RedisConstant {
     public static final int USER_LOGIN_KEY_TIMEOUT = 60 * 60 * 24 * 100;
     public static final int USER_LOGIN_REFRESH_KEY_TIMEOUT = 60 * 60 * 24 * 365;
 
+    //手机验证码登录（乘客端）
+    public static final String SMS_CUSTOMER_CODE_KEY_PREFIX = "sms:customer:code:";
+    public static final int SMS_CUSTOMER_CODE_TIMEOUT = 60 * 5;
+    public static final String SMS_CUSTOMER_FAIL_KEY_PREFIX = "sms:customer:fail:";
+    public static final int SMS_CUSTOMER_MAX_FAIL_TIMES = 5;
+    public static final String SMS_CUSTOMER_SEND_LIMIT_KEY_PREFIX = "sms:customer:limit:";
+    public static final int SMS_CUSTOMER_SEND_LIMIT_TIMEOUT = 60;
+
     //司机GEO地址
     public static final String DRIVER_GEO_LOCATION = "driver:geo:location";
     //司机接单临时容器

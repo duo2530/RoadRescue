@@ -3,8 +3,8 @@
   import { useUserStore } from '@/store'
 
   onLaunch(() => {
-    // 演示版：没有登录页，启动时自动获取（mock 下为预置）用户信息
-    useUserStore().ensureLogin()
+    // 没有登录态或登录已过期会跳转登录页
+    useUserStore().ensureLogin().catch(() => {})
   })
 </script>
 

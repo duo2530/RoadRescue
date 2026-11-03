@@ -1,8 +1,13 @@
 import request from '@/utils/request'
 
+/** 发送短信验证码  POST /sms/code  body: { phone }  =>  { hint } */
+export function sendSmsCode(phone) {
+  return request({ url: '/sms/code', method: 'post', data: { phone }, headers: { isToken: false } })
+}
+
 /**
- * 登录（演示版自动登录；后端可替换为微信 code / 手机号验证码登录）
- * POST /login  body: { phone?, code? }  =>  { token }
+ * 手机号验证码登录，未注册的手机号自动注册
+ * POST /login  body: { phone, code }  =>  { token }
  */
 export function login(data) {
   return request({ url: '/login', method: 'post', data, headers: { isToken: false } })

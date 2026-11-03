@@ -6,6 +6,12 @@
       "navigationStyle": "custom"
     }
   }, {
+    "path": "pages/login",
+    "style": {
+      "navigationBarTitleText": "道路救援",
+      "navigationStyle": "custom"
+    }
+  }, {
     "path": "pages/order/index",
     "style": {
       "navigationBarTitleText": "服务查询",

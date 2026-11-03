@@ -3,6 +3,7 @@ package com.atguigu.daijia.customer.controller;
 import com.atguigu.daijia.common.result.Result;
 import com.atguigu.daijia.customer.service.CustomerInfoService;
 import com.atguigu.daijia.model.entity.customer.CustomerInfo;
+import com.atguigu.daijia.model.form.customer.CustomerPhoneForm;
 import com.atguigu.daijia.model.form.customer.UpdateWxPhoneForm;
 import com.atguigu.daijia.model.vo.customer.CustomerLoginVo;
 import io.swagger.v3.oas.annotations.Operation;
@@ -25,6 +26,12 @@ public class CustomerInfoController {
 	public Result<CustomerLoginVo> getCustomerLoginInfo(@PathVariable Long customerId) {
 		CustomerLoginVo customerLoginVo = customerInfoService.getCustomerInfo(customerId);
 		return Result.ok(customerLoginVo);
+	}
+
+	@Operation(summary = "手机号验证码登录，未注册则自动创建客户")
+	@PostMapping("/loginByPhone")
+	public Result<Long> loginByPhone(@RequestBody CustomerPhoneForm customerPhoneForm) {
+		return Result.ok(customerInfoService.loginByPhone(customerPhoneForm.getPhone()));
 	}
 
 	//微信小程序登录接口

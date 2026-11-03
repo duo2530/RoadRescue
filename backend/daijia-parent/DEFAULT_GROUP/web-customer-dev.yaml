@@ -51,3 +51,6 @@ roadrescue:
     enabled: true
     customer-id: 1
     driver-id: 1
+  # 没有短信服务商时的演示验证码（非空则固定为该值并在发送接口返回），生产环境必须清空
+  sms:
+    demo-code: "123456"

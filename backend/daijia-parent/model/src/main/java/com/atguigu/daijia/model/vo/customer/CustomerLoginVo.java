@@ -20,4 +20,7 @@ public class CustomerLoginVo {
 
     @Schema(description = "是否绑定手机号码")
     private Boolean isBindPhone;
+
+    @Schema(description = "手机号码")
+    private String phone;
 }

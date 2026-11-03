@@ -36,7 +36,7 @@
   import { useUserStore } from '@/store'
 
   const userStore = useUserStore()
-  userStore.ensureLogin()
+  userStore.ensureLogin().catch(() => {})
 
   const servicePhone = config.appInfo.servicePhone
 

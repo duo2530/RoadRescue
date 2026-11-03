@@ -59,8 +59,10 @@ XXL-JOB 控制台 http://localhost:8080/xxl-job-admin：需要确认派单任务
 | 端 | 方式 |
 | --- | --- |
 | 管理端 | admin / 111111 |
-| 乘客端 | 打开即自动演示登录（`/customer/demoLogin` → customer_id=1） |
+| 乘客端 | 登录页点「登录/注册」展开，点「演示账号」行填入手机号和验证码 123456，勾选协议后登录（real 模式走 `/customer/sms/send`、`/customer/loginByPhone`，手机号对应 customer_id=1） |
 | 司机端 | 登录页点「演示账号」填入后登录（real 模式走 `/driver/demoLogin` → driver_id=1） |
+
+乘客端的验证码固定为 Nacos `web-customer-dev.yaml` 里的 `roadrescue.sms.demo-code`，尚未接短信服务商，上生产前必须清空。`/customer/demoLogin` 仍保留，供接口层取 token。
 
 演示登录只在 Nacos 配置 `roadrescue.demo-login.enabled=true` 时注册，用来替代 H5 无法调用的 `wx.login`。
 

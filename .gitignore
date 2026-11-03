@@ -19,3 +19,4 @@ backend/infra/data/
 backend/infra/artifacts/
 apps/*/.env
 !**/.env.example
+/.claude/settings.json

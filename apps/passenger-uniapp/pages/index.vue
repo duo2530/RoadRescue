@@ -260,7 +260,7 @@
     })
     userStore.ensureLogin().then(user => {
       if (!form.phone) form.phone = user.phone
-    })
+    }).catch(() => {})
     locate()
   })
 

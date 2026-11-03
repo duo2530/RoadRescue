@@ -1,4 +1,4 @@
-import { getDb, saveDb } from './db'
+import { getDb, saveDb, DEMO_SMS_CODE } from './db'
 import { SERVICES, getService, calcPrice } from './services'
 import { validateOrder } from '../utils/order-validation'
 
@@ -67,7 +67,19 @@ function estimate(db, serviceType, distance) {
 }
 
 // ---------- 用户 ----------
-route('POST', '/login', () => ok({ token: 'mock-token-' + Date.now() }))
+route('POST', '/sms/code', ({ data }) => {
+  if (!/^1\d{10}$/.test(data.phone || '')) return fail('请输入正确的手机号')
+  // 演示版不发短信，固定验证码
+  return ok({ hint: '演示验证码：' + DEMO_SMS_CODE })
+})
+route('POST', '/login', ({ data }) => {
+  if (!/^1\d{10}$/.test(data.phone || '')) return fail('请输入正确的手机号')
+  if (data.code !== DEMO_SMS_CODE) return fail('验证码错误')
+  const db = getDb()
+  db.user.phone = data.phone
+  saveDb()
+  return ok({ token: 'mock-token-' + Date.now() })
+})
 route('GET', '/user/info', () => ok(getDb().user))
 route('POST', '/logout', () => ok(null))
 
@@ -206,6 +218,9 @@ function parseQuery(qs) {
   return query
 }
 
+// 不需要登录的接口
+const PUBLIC = ['/sms/code', '/login']
+
 export default function mockRequest(options) {
   const method = (options.method || 'GET').toUpperCase()
   const [path, qs] = options.url.split('?')
@@ -213,6 +228,10 @@ export default function mockRequest(options) {
   return new Promise(resolve => {
     // 模拟网络延迟
     setTimeout(() => {
+      if (!PUBLIC.includes(path) && !(options.header || {}).Authorization) {
+        resolve(fail('请先登录', 401))
+        return
+      }
       for (const r of routes) {
         const m = r.method === method && path.match(r.reg)
         if (m) {

@@ -20,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import me.chanjar.weixin.common.error.WxErrorException;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -75,6 +76,54 @@ public class CustomerInfoServiceImpl extends ServiceImpl<CustomerInfoMapper, Cus
 
         //5 返回用户id
         return customerInfo.getId();
+    }
+
+    //手机号验证码登录：验证码已由 web-customer 校验，这里只负责查找或创建客户
+    @Override
+    public Long loginByPhone(String phone) {
+        CustomerInfo customerInfo = findByPhone(phone);
+        if(customerInfo == null) {
+            customerInfo = createByPhone(phone);
+        }
+
+        //status=2 为禁用账号
+        if(Integer.valueOf(2).equals(customerInfo.getStatus())) {
+            throw new GuiguException(ResultCodeEnum.ACCOUNT_STOP);
+        }
+
+        CustomerLoginLog customerLoginLog = new CustomerLoginLog();
+        customerLoginLog.setCustomerId(customerInfo.getId());
+        customerLoginLog.setMsg("手机号验证码登录");
+        customerLoginLogMapper.insert(customerLoginLog);
+
+        return customerInfo.getId();
+    }
+
+    private CustomerInfo findByPhone(String phone) {
+        LambdaQueryWrapper<CustomerInfo> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(CustomerInfo::getPhone, phone)
+               .orderByAsc(CustomerInfo::getId)
+               .last("LIMIT 1");//phone 无唯一索引，历史数据可能重复，取最早的一条避免 selectOne 抛异常
+        return customerInfoMapper.selectOne(wrapper);
+    }
+
+    private CustomerInfo createByPhone(String phone) {
+        CustomerInfo customerInfo = new CustomerInfo();
+        customerInfo.setNickname(String.valueOf(System.currentTimeMillis()));
+        customerInfo.setAvatarUrl("https://oss.aliyuncs.com/aliyun_id_photo_bucket/default_handsome.jpg");
+        customerInfo.setPhone(phone);
+        //wx_open_id 是 NOT NULL 且唯一索引，手机号注册没有微信 openId，用 phone_ 前缀占位
+        customerInfo.setWxOpenId("phone_" + phone);
+        try {
+            customerInfoMapper.insert(customerInfo);
+        } catch (DuplicateKeyException e) {
+            //同一手机号并发注册时另一个请求已插入，唯一索引拦截后改为读取已有记录
+            customerInfo = findByPhone(phone);
+            if(customerInfo == null) {
+                throw e;
+            }
+        }
+        return customerInfo;
     }
 
     //获取客户登录信息
