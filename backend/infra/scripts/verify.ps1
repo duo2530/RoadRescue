@@ -11,13 +11,13 @@ Section 'docker compose ps'
 docker compose -f $compose ps
 
 Section 'MySQL：业务库 + xxl_job 表数量'
-docker exec daijia-mysql mysql -uroot -pshangguigu@QY123 -N -e "SELECT table_schema, COUNT(*) AS tables FROM information_schema.tables WHERE table_schema LIKE 'daijia%' OR table_schema='xxl_job' GROUP BY table_schema ORDER BY table_schema;" 2>$null
+docker exec roadrescue-mysql mysql -uroot -pshangguigu@QY123 -N -e "SELECT table_schema, COUNT(*) AS tables FROM information_schema.tables WHERE table_schema LIKE 'daijia%' OR table_schema='xxl_job' GROUP BY table_schema ORDER BY table_schema;" 2>$null
 
 Section 'Redis：PING'
-docker exec daijia-redis redis-cli ping
+docker exec roadrescue-redis redis-cli ping
 
 Section 'RabbitMQ：延迟插件 + 管理页登录（admin/admin123）'
-docker exec daijia-rabbitmq rabbitmq-plugins list -e | Select-String 'delayed'
+docker exec roadrescue-rabbitmq rabbitmq-plugins list -e | Select-String 'delayed'
 $auth = 'Basic ' + [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes('admin:admin123'))
 try {
     (Invoke-RestMethod -Uri 'http://localhost:15672/api/whoami' -Headers @{Authorization = $auth} -TimeoutSec 10) | ConvertTo-Json -Compress
@@ -26,7 +26,7 @@ try {
 }
 
 Section 'MongoDB：ping'
-docker exec daijia-mongo mongosh --quiet --eval "db.runCommand({ping:1})" 2>$null
+docker exec roadrescue-mongo mongosh --quiet --eval "db.runCommand({ping:1})" 2>$null
 
 Section 'Nacos：readiness'
 try {

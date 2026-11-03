@@ -11,13 +11,13 @@
 # 这两个脚本只在数据卷为空时执行一次；如需重新初始化：
 #   docker compose -f infra/docker-compose.yml down -v
 # =============================================================================
-name: daijia-infra
+name: roadrescue-infra
 
 services:
   # --------------------------------------------------------------- MySQL 8.0
   mysql:
     image: mysql:8.0
-    container_name: daijia-mysql
+    container_name: roadrescue-mysql
     restart: unless-stopped
     command:
       - --character-set-server=utf8mb4
@@ -31,7 +31,7 @@ services:
     ports:
       - "3306:3306"
     volumes:
-      - daijia-mysql-data:/var/lib/mysql
+      - roadrescue-mysql-data:/var/lib/mysql
       - ../sql/daijia.sql:/docker-entrypoint-initdb.d/01-daijia.sql:ro
       - ../sql/tables_xxl_job.sql:/docker-entrypoint-initdb.d/02-xxl-job.sql:ro
     healthcheck:
@@ -42,12 +42,12 @@ services:
       start_period: 180s
     mem_limit: 768m
     networks:
-      - daijia-net
+      - roadrescue-net
 
   # ------------------------------------------------------------------- Redis
   redis:
     image: redis:7
-    container_name: daijia-redis
+    container_name: roadrescue-redis
     restart: unless-stopped
     command: ["redis-server", "--appendonly", "yes", "--maxmemory", "256mb", "--maxmemory-policy", "noeviction"]
     environment:
@@ -55,7 +55,7 @@ services:
     ports:
       - "6379:6379"
     volumes:
-      - daijia-redis-data:/data
+      - roadrescue-redis-data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -63,14 +63,14 @@ services:
       retries: 10
     mem_limit: 256m
     networks:
-      - daijia-net
+      - roadrescue-net
 
   # ---------------------------------------------------------------- RabbitMQ
   # 延迟队列插件 .ez 放在 infra/rabbitmq/；enabled_plugins 同时启用 management + 延迟插件
   rabbitmq:
     image: rabbitmq:3.9-management
-    container_name: daijia-rabbitmq
-    hostname: daijia-rabbitmq
+    container_name: roadrescue-rabbitmq
+    hostname: roadrescue-rabbitmq
     restart: unless-stopped
     environment:
       RABBITMQ_DEFAULT_USER: admin
@@ -81,7 +81,7 @@ services:
       - "5672:5672"
       - "15672:15672"
     volumes:
-      - daijia-rabbitmq-data:/var/lib/rabbitmq
+      - roadrescue-rabbitmq-data:/var/lib/rabbitmq
       - ./rabbitmq/enabled_plugins:/etc/rabbitmq/enabled_plugins:ro
       - ./rabbitmq/rabbitmq_delayed_message_exchange-3.9.0.ez:/opt/rabbitmq/plugins/rabbitmq_delayed_message_exchange-3.9.0.ez:ro
     healthcheck:
@@ -92,12 +92,12 @@ services:
       start_period: 30s
     mem_limit: 512m
     networks:
-      - daijia-net
+      - roadrescue-net
 
   # ----------------------------------------------------------------- MongoDB
   mongo:
     image: mongo:6.0
-    container_name: daijia-mongo
+    container_name: roadrescue-mongo
     restart: unless-stopped
     # 限制 WiredTiger 缓存，避免吃满内存
     command: ["--wiredTigerCacheSizeGB", "0.25"]
@@ -106,7 +106,7 @@ services:
     ports:
       - "27017:27017"
     volumes:
-      - daijia-mongo-data:/data/db
+      - roadrescue-mongo-data:/data/db
     healthcheck:
       test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
       interval: 15s
@@ -115,13 +115,13 @@ services:
       start_period: 20s
     mem_limit: 512m
     networks:
-      - daijia-net
+      - roadrescue-net
 
   # -------------------------------------------------- Nacos 2.3.0 standalone
   # 2.x 客户端还需要 9848（gRPC）端口，必须一起映射
   nacos:
     image: nacos/nacos-server:v2.3.0
-    container_name: daijia-nacos
+    container_name: roadrescue-nacos
     restart: unless-stopped
     environment:
       MODE: standalone
@@ -134,7 +134,7 @@ services:
       - "8848:8848"
       - "9848:9848"
     volumes:
-      - daijia-nacos-data:/home/nacos/data
+      - roadrescue-nacos-data:/home/nacos/data
       - ./data/nacos/logs:/home/nacos/logs
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS -o /dev/null http://127.0.0.1:8848/nacos/v1/console/health/readiness"]
@@ -144,7 +144,7 @@ services:
       start_period: 60s
     mem_limit: 800m
     networks:
-      - daijia-net
+      - roadrescue-net
 
   # ------------------------------------------------------ XXL-JOB admin 2.3.0
   # 注意：docker hub 上 xuxueli/xxl-job-admin:2.3.0 镜像里的 admin 实际是旧版本，
@@ -154,7 +154,7 @@ services:
   #      copy xxl-job-master\xxl-job-admin\target\xxl-job-admin-2.3.0.jar infra\artifacts\xxl-job-admin.jar
   xxl-job-admin:
     image: xuxueli/xxl-job-admin:2.3.0
-    container_name: daijia-xxl-job-admin
+    container_name: roadrescue-xxl-job-admin
     restart: unless-stopped
     environment:
       PARAMS: >-
@@ -183,16 +183,16 @@ services:
       start_period: 60s
     mem_limit: 512m
     networks:
-      - daijia-net
+      - roadrescue-net
 
 networks:
-  daijia-net:
-    name: daijia-net
+  roadrescue-net:
+    name: roadrescue-net
     driver: bridge
 
 volumes:
-  daijia-mysql-data:
-  daijia-redis-data:
-  daijia-rabbitmq-data:
-  daijia-mongo-data:
-  daijia-nacos-data:
+  roadrescue-mysql-data:
+  roadrescue-redis-data:
+  roadrescue-rabbitmq-data:
+  roadrescue-mongo-data:
+  roadrescue-nacos-data:

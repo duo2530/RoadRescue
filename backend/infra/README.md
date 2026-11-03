@@ -24,12 +24,12 @@ docker compose -f infra\docker-compose.yml down -v
 
 | 服务 | 容器名 | 宿主机地址 | 账号 / 密码 | 备注 |
 | --- | --- | --- | --- | --- |
-| MySQL | `daijia-mysql` | `127.0.0.1:3306` | `root` / `shangguigu@QY123` | 8 个业务库 + `xxl_job` |
-| Redis | `daijia-redis` | `127.0.0.1:6379` | 无密码，db 0 | appendonly 开启 |
-| RabbitMQ | `daijia-rabbitmq` | `127.0.0.1:5672`，管理页 `http://localhost:15672` | `admin` / `admin123`，vhost `/` | 已启用 `rabbitmq_delayed_message_exchange` |
-| MongoDB | `daijia-mongo` | `127.0.0.1:27017` | 无认证，业务库 `daijia` | |
-| Nacos | `daijia-nacos` | `http://127.0.0.1:8848/nacos`，客户端 gRPC `127.0.0.1:9848` | standalone、无认证 | 2.3.0 |
-| XXL-JOB admin | `daijia-xxl-job-admin` | `http://127.0.0.1:8080/xxl-job-admin` | `admin` / `123456`，accessToken `default_token` | 2.3.0，库 `xxl_job` |
+| MySQL | `roadrescue-mysql` | `127.0.0.1:3306` | `root` / `shangguigu@QY123` | 8 个业务库 + `xxl_job` |
+| Redis | `roadrescue-redis` | `127.0.0.1:6379` | 无密码，db 0 | appendonly 开启 |
+| RabbitMQ | `roadrescue-rabbitmq` | `127.0.0.1:5672`，管理页 `http://localhost:15672` | `admin` / `admin123`，vhost `/` | 已启用 `rabbitmq_delayed_message_exchange` |
+| MongoDB | `roadrescue-mongo` | `127.0.0.1:27017` | 无认证，业务库 `daijia` | |
+| Nacos | `roadrescue-nacos` | `http://127.0.0.1:8848/nacos`，客户端 gRPC `127.0.0.1:9848` | standalone、无认证 | 2.3.0 |
+| XXL-JOB admin | `roadrescue-xxl-job-admin` | `http://127.0.0.1:8080/xxl-job-admin` | `admin` / `123456`，accessToken `default_token` | 2.3.0，库 `xxl_job` |
 
 ## 首次初始化
 

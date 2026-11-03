@@ -38,7 +38,7 @@ copy backend\.env.example backend\.env      # 填入腾讯地图 key 等；不�
 powershell backend/scripts/nacos-import.ps1
 
 # 3. 演示数据（司机认证、接单设置、当日人脸记录）
-docker exec -i daijia-mysql mysql -uroot -p<密码> < backend/sql/test-data.sql
+docker exec -i roadrescue-mysql mysql -uroot -p<密码> < backend/sql/test-data.sql
 
 # 4. 编译并启动全部服务
 cd backend/daijia-parent; mvn -DskipTests install; cd ../..
