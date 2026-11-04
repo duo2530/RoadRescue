@@ -7,7 +7,7 @@ start() { # dir script port
   if [ "$(curl -s -o /dev/null -w '%{http_code}' --max-time 3 "http://localhost:$3/")" = "200" ]; then
     echo "port $3 已在运行，跳过"; return
   fi
-  (cd "apps/$1" && nohup npm run "$2" > "../../logs/verify/$1.log" 2>&1 &)
+  (cd "apps/$1" && nohup npm run "$2" > "../../logs/verify/$1.log" 2>&1 </dev/null &)
 }
 
 start admin-web dev 9527
