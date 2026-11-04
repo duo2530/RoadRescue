@@ -103,6 +103,16 @@ route('DELETE', '/vehicle/:id', ({ params }) => {
 })
 
 // ---------- 服务与计价 ----------
+// 附近车辆：在用户位置周围固定散布几辆，模拟开启接单的司机
+route('GET', '/driver/nearby', ({ query }) => {
+  const lat = Number(query.latitude)
+  const lng = Number(query.longitude)
+  return ok([[0.004, -0.006], [-0.005, 0.003], [0.007, 0.005], [-0.002, -0.009]].map(([dLat, dLng]) => ({
+    latitude: lat + dLat,
+    longitude: lng + dLng,
+    distance: Math.round(Math.hypot(dLat * 111, dLng * 95) * 100) / 100
+  })))
+})
 route('GET', '/service/list', () => ok(SERVICES))
 route('POST', '/order/estimate', ({ data }) => {
   const { coupon, ...rest } = estimate(getDb(), data.serviceType, data.distance)

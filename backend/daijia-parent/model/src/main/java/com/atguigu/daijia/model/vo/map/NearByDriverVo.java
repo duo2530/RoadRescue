@@ -13,4 +13,10 @@ public class NearByDriverVo {
 
     @Schema(description = "距离")
     private BigDecimal distance;
+
+    @Schema(description = "经度")
+    private BigDecimal longitude;
+
+    @Schema(description = "纬度")
+    private BigDecimal latitude;
 }

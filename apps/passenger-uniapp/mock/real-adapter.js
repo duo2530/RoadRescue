@@ -11,6 +11,7 @@
  *   GET  /order/:id        -> GET  /order/getOrderInfo/{id}
  *   POST /order/:id/cancel -> GET  /order/cancelOrder/{id}（道路救援新增，仅待接单可取消）
  *   GET  /coupon/list      -> GET  /coupon/findNoUsePage | findUsedPage
+ *   GET  /driver/nearby    -> POST /location/searchNearByDriver（Redis GEO 中开启接单的司机位置）
  * 后端没有的能力（车辆、服务项目、兑换码）继续走本地 mock；
  * 费用预估按道路救援一口价/里程规则在前端计算（乐尚代驾 Drools 规则是代驾计费，口径不同），
  * 下单后后端仍会用 Drools 生成 expectAmount，救援价存于 remark.price。
@@ -108,6 +109,16 @@ const handlers = [
   ['GET', /^\/user\/info$/, () => call('GET', '/customer/getCustomerLoginInfo').then(r =>
     r.code === 200 ? ok({ userId: null, phone: r.data.phone || '', nickname: r.data.nickname, avatar: r.data.avatarUrl }) : r)],
   ['POST', /^\/logout$/, () => Promise.resolve(ok(null))],
+  ['GET', /^\/driver\/nearby$/, ({ query }) =>
+    call('POST', '/location/searchNearByDriver', { latitude: query.latitude, longitude: query.longitude }).then(r =>
+      r.code === 200
+        ? ok((r.data || []).map(d => ({ latitude: Number(d.latitude), longitude: Number(d.longitude), distance: Number(d.distance) })))
+        : r)],
+  ['GET', /^\/driver\/nearby$/, ({ query }) =>
+    call('POST', '/location/searchNearByDriver', { latitude: query.latitude, longitude: query.longitude }).then(r =>
+      r.code === 200
+        ? ok((r.data || []).map(d => ({ latitude: Number(d.latitude), longitude: Number(d.longitude), distance: Number(d.distance) })))
+        : r)],
   ['POST', /^\/order$/, ({ data }) => {
     const service = getService(data.serviceType)
     const error = validateOrder(data, service)

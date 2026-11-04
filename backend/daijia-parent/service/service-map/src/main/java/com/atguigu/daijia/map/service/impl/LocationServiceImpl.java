@@ -153,6 +153,9 @@ public class LocationServiceImpl implements LocationService {
                 NearByDriverVo nearByDriverVo = new NearByDriverVo();
                 nearByDriverVo.setDriverId(driverId);
                 nearByDriverVo.setDistance(currentDistance);
+                Point driverPoint = item.getContent().getPoint();
+                nearByDriverVo.setLongitude(BigDecimal.valueOf(driverPoint.getX()));
+                nearByDriverVo.setLatitude(BigDecimal.valueOf(driverPoint.getY()));
                 list.add(nearByDriverVo);
 
             }

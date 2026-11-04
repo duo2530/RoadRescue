@@ -20,7 +20,7 @@
         <view class="bubble" @click="chooseStart">
           <view class="bubble-head">
             <image class="bubble-signal" src="/static/images/rescue/signal.png" mode="aspectFit"></image>
-            <text>附近有10辆车，最快15分钟内到达</text>
+            <text>{{ nearbyText }}</text>
           </view>
           <view class="bubble-body">
             <view class="bubble-text">
@@ -183,11 +183,12 @@
 
 <script setup>
   import { ref, reactive, computed, watch } from 'vue'
-  import { onLoad, onShow, onUnload } from '@dcloudio/uni-app'
+  import { onLoad, onShow, onHide, onUnload } from '@dcloudio/uni-app'
   import config from '@/config'
   import { useUserStore } from '@/store'
   import { listService } from '@/api/service'
   import { estimate, createOrder } from '@/api/order'
+  import { listNearbyTrucks } from '@/api/driver'
   import { validateOrder } from '@/utils/order-validation'
   import { reverseGeocode, drivingRoute, straightDistance, fromGps } from '@/utils/qqmap'
   import { AGREEMENT_TEXT, GUARANTEE_TEXT } from '@/utils/texts'
@@ -218,20 +219,27 @@
 
   const routeMode = computed(() => !!(current.value.needDestination && endAddress.value && startAddress.value))
 
+  // 附近开启接单的司机位置，每辆车画成一个板车图标
+  const nearbyTrucks = ref([])
+  const nearbyText = computed(() => {
+    const list = nearbyTrucks.value
+    if (!list.length) return '附近暂无空闲救援车辆'
+    return `附近有${list.length}辆车，最近约${list[0].distance.toFixed(1)}公里`
+  })
+
   const markers = computed(() => {
-    if (!routeMode.value) return []
+    const list = nearbyTrucks.value.map((t, i) => ({
+      id: 10 + i,
+      latitude: t.latitude,
+      longitude: t.longitude,
+      iconPath: '/static/images/rescue/truck.png',
+      width: 44,
+      height: 27,
+      anchor: { x: 0.5, y: 0.75 }
+    }))
+    if (!routeMode.value) return list
     const s = startAddress.value
     const e = endAddress.value
-    // 起点附近散布几辆拖车，演示「附近车辆」；偏移量随起终点距离缩放，避免遮住起点
-    const span = Math.max(Math.abs(e.latitude - s.latitude), Math.abs(e.longitude - s.longitude), 0.01)
-    const list = [[0.12, -0.18], [-0.15, 0.1], [0.2, 0.16]].map(([dLat, dLng], i) => ({
-      id: 10 + i,
-      latitude: s.latitude + dLat * span,
-      longitude: s.longitude + dLng * span,
-      iconPath: '/static/images/rescue/truck.png',
-      width: 34,
-      height: 20
-    }))
     // 起终点放在最后，层级在拖车之上
     list.push(
       { id: 1, latitude: s.latitude, longitude: s.longitude, iconPath: '/static/images/rescue/marker-start.png', width: 26, height: 32, anchor: { x: 0.5, y: 1 } },
@@ -265,11 +273,31 @@
   })
 
   onUnload(() => {
+    clearInterval(nearbyTimer)
     uni.$off('vehicle:selected', onVehicleSelected)
   })
 
+  // 司机位置随接单端上报变化，停留在首页时定时刷新
+  const NEARBY_REFRESH_MS = 15000
+  let nearbyTimer = null
+  function refreshNearby() {
+    const s = startAddress.value
+    if (!s) return
+    listNearbyTrucks(s.latitude, s.longitude)
+      .then(list => { nearbyTrucks.value = list })
+      .catch(() => {})
+  }
+
   // 兑换优惠券后回到首页时刷新费用
-  onShow(refreshPrice)
+  onShow(() => {
+    refreshPrice()
+    refreshNearby()
+    clearInterval(nearbyTimer)
+    nearbyTimer = setInterval(refreshNearby, NEARBY_REFRESH_MS)
+  })
+  onHide(() => clearInterval(nearbyTimer))
+
+  watch(startAddress, refreshNearby)
 
   watch([() => current.value.type, distance], refreshPrice)
 
