@@ -13,25 +13,26 @@
 
 ## 界面预览
 
-**调度管理端**
-
-<table>
-  <tr>
-    <td><img src="docs/image/admin-02-dashboard.png" alt="调度看板"></td>
-    <td><img src="docs/image/admin-11-finished-detail.png" alt="工单详情"></td>
-  </tr>
-  <tr align="center"><td>调度看板</td><td>救援工单与详情</td></tr>
-</table>
-
 **乘客端 / 司机端（H5）**
 
 <table>
   <tr>
-    <td><img src="docs/image/passenger-01-home.png" alt="乘客首页" width="260"></td>
-    <td><img src="docs/image/passenger-04-submit-form.png" alt="填写救援单" width="260"></td>
-    <td><img src="docs/image/driver-03-dispatched-hall.png" alt="司机抢单大厅" width="260"></td>
+    <td><img src="docs/images/readme/h5-home.png" alt="乘客首页" width="260"></td>
+    <td><img src="docs/images/readme/h5-order-detail.png" alt="救援进度" width="260"></td>
+    <td><img src="docs/images/readme/h5-driver-hall.png" alt="司机抢单大厅" width="260"></td>
   </tr>
-  <tr align="center"><td>乘客首页</td><td>填写救援单</td><td>司机抢单大厅</td></tr>
+  <tr align="center"><td>乘客首页：附近板车与下单</td><td>乘客端：救援进度</td><td>司机端：抢单大厅</td></tr>
+</table>
+
+**调度管理端**
+
+<table>
+  <tr>
+    <td><img src="docs/images/readme/admin-dashboard.png" alt="调度看板"></td>
+    <td><img src="docs/images/readme/admin-orders.png" alt="救援工单"></td>
+    <td><img src="docs/images/readme/admin-order-detail.png" alt="工单详情"></td>
+  </tr>
+  <tr align="center"><td>调度看板</td><td>救援工单</td><td>工单详情</td></tr>
 </table>
 
 ## 功能特性
