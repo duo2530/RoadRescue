@@ -1,116 +1,127 @@
 ﻿# 道路救援 (Road Rescue)
 
-道路救援全栈面试作品：乘客端 + 救援司机端（uni-app）+ PC 调度管理端（Vue 3），后端基于乐尚代驾 Spring Cloud 微服务改造。
+车主在手机上一键呼叫拖车、搭电、换胎、紧急充电，附近的救援师傅抢单上门，调度人员在 PC 端掌握全部工单。乘客端 + 救援司机端（uni-app）+ 调度管理端（Vue 3），后端基于乐尚代驾 Spring Cloud 微服务改造。
 
-使用步骤见 [操作手册](docs/操作手册.md)，实拍截图位于 `docs/image/`；支付配置见 [支付宝沙箱支付](docs/alipay-sandbox.md)。
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
+![Java](https://img.shields.io/badge/Java-17-orange.svg)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.0.5-6DB33F.svg)
+![Spring Cloud](https://img.shields.io/badge/Spring%20Cloud-2022.0.2-6DB33F.svg)
+![Vue](https://img.shields.io/badge/Vue-3-42b883.svg)
+![Element Plus](https://img.shields.io/badge/Element%20Plus-2.8-409EFF.svg)
+![uni-app](https://img.shields.io/badge/uni--app-Vue%203-2B9939.svg)
+![MySQL](https://img.shields.io/badge/MySQL-8.0-4479A1.svg)
 
-- 乘客端、司机端沿用「道路救援」Mock 版 UI。`VITE_API_MODE=real` 时经适配层接入真实后端，后端没有的能力回落到本地 mock。
-- 管理端是新写的，对接 `web-mgr`（`/mgr-api`），包含登录、数据看板、订单、司机审核、乘客、系统用户/角色/菜单。
-- 后端链路已用真实数据跑通：乘客下单 → XXL-JOB 派单到附近司机 → 司机抢单（Redisson 锁）→ 到达 → 验车 → 开始救援 → 上传轨迹（MongoDB）→ 结束救援，Drools 计费与分账。
+## 界面预览
 
-## 目录
+**调度管理端**
 
-```
-backend/
-  daijia-parent/      Spring Cloud 微服务（gateway 8600、web-customer/driver/mgr、service-*）
-    DEFAULT_GROUP/    Nacos 配置（scripts/nacos-import.ps1 导入）
-  infra/              docker-compose：MySQL、Redis、Nacos、RabbitMQ、MongoDB、XXL-JOB、MinIO
-  scripts/            start-all / stop-all / nacos-import / smoke-test / test-data.sql
-  sql/                daijia.sql（业务库）、tables_xxl_job.sql、test-data.sql
-  .env.example        微信、腾讯云密钥模板（复制为 .env，已 gitignore）
-apps/
-  admin-web/          Vue 3 + Vite + Element Plus + Pinia，端口 9527
-  passenger-uniapp/   乘客端，H5 端口 9090
-  driver-uniapp/      司机端，H5 端口 9091
-evidence/agent-browser/  关键页截图
-```
+<table>
+  <tr>
+    <td><img src="docs/image/admin-02-dashboard.png" alt="调度看板"></td>
+    <td><img src="docs/image/admin-11-finished-detail.png" alt="工单详情"></td>
+  </tr>
+  <tr align="center"><td>调度看板</td><td>救援工单与详情</td></tr>
+</table>
 
-## 启动
+**乘客端 / 司机端（H5）**
 
-前置：JDK 17、Maven 3.9、Node 18+、Docker Desktop。
+<table>
+  <tr>
+    <td><img src="docs/image/passenger-01-home.png" alt="乘客首页" width="260"></td>
+    <td><img src="docs/image/passenger-04-submit-form.png" alt="填写救援单" width="260"></td>
+    <td><img src="docs/image/driver-03-dispatched-hall.png" alt="司机抢单大厅" width="260"></td>
+  </tr>
+  <tr align="center"><td>乘客首页</td><td>填写救援单</td><td>司机抢单大厅</td></tr>
+</table>
+
+## 功能特性
+
+- **呼叫救援**：选择救援地点和拖车终点，填写车型、车牌，提交拖车、搭电、换胎、紧急充电订单。
+- **附近板车**：乘客首页地图显示附近在线的救援车辆和最近距离。
+- **自动派单**：新订单按距离推送给附近符合接单条件的师傅。
+- **抢单与服务**：师傅在大厅抢单，一单只归一人；之后到达、验车、开始救援、结束救援，全程记录轨迹。
+- **计费结算**：服务结束后由服务端按规则计费并生成分账，H5 支持支付宝沙箱支付。
+- **订单查询**：乘客查看进行中和历史订单，可取消尚未被接的单。
+- **调度管理**：看板统计、工单详情、师傅审核、乘客启停、系统用户/角色/菜单权限。
+
+## 快速开始
+
+需要 JDK 17、Maven 3.9、Node.js 18+ 和 Docker Desktop。在仓库根目录用 PowerShell 执行：
 
 ```powershell
-# 1. 中间件（首次启动自动导入 sql/daijia.sql 与 tables_xxl_job.sql）
+# 1. 构建定制版 XXL-JOB 调度中心（Compose 会挂载这个 jar）
+cd backend/xxl-job-master; mvn -pl xxl-job-admin -am -DskipTests package; cd ../..
+
+# 2. 中间件：MySQL、Redis、RabbitMQ、MongoDB、Nacos、XXL-JOB（首次启动自动建库）
 docker compose -f backend/infra/docker-compose.yml up -d
 
-# 2. 密钥与 Nacos 配置
-copy backend\.env.example backend\.env      # 填入腾讯地图 key 等；不填则地图/人脸相关接口不可用
+# 3. 密钥模板与 Nacos 配置
+copy backend\.env.example backend\.env      # 填入腾讯地图 key 等
 powershell backend/scripts/nacos-import.ps1
 
-# 3. 演示数据（司机认证、接单设置、当日人脸记录）
-docker exec -i roadrescue-mysql mysql -uroot -p<密码> < backend/sql/test-data.sql
+# 4. 演示数据（司机认证、接单设置、当日人脸记录）
+docker cp backend/sql/test-data.sql roadrescue-mysql:/tmp/test-data.sql
+docker exec roadrescue-mysql sh -c 'mysql -uroot -p"$MYSQL_ROOT_PASSWORD" < /tmp/test-data.sql'
 
-# 4. 编译并启动全部服务
+# 5. 编译并启动全部后端服务
 cd backend/daijia-parent; mvn -DskipTests install; cd ../..
-powershell backend/scripts/start-all.ps1
+powershell backend/scripts/start-all.ps1 -JdkHome <你的 JDK 17 目录>
 
-# 5. 前端
-cd apps/admin-web; npm i; npm run dev                 # http://localhost:9527
-cd apps/passenger-uniapp; npm i; npm run dev:h5       # http://localhost:9090
-cd apps/driver-uniapp; npm i; npm run dev:h5          # http://localhost:9091
+# 6. 三个前端，各开一个终端
+cd apps/admin-web; npm i; npm run dev
+cd apps/passenger-uniapp; npm i; npm run dev:h5
+cd apps/driver-uniapp; npm i; npm run dev:h5
 ```
 
-uni-app 的 `.env` 里设置 `VITE_API_MODE=real`（默认 `mock`，不需要后端也能演示），`VITE_GATEWAY` 默认是 `http://127.0.0.1:8600`。
+uni-app 默认 `VITE_API_MODE=mock`，不需要后端也能看界面；在各自的 `.env` 里设为 `real` 才接真实后端。
 
-XXL-JOB 控制台 http://localhost:8080/xxl-job-admin：需要确认派单任务（新订单派单 job）已启动。
+| 服务 | 地址 | 账号 |
+| --- | --- | --- |
+| 管理端 | http://localhost:9527 | `admin` / `111111` |
+| 乘客端 H5 | http://localhost:9090 | 登录页点「演示账号」，验证码 `123456` |
+| 司机端 H5 | http://localhost:9091 | 登录页点「演示账号」，验证码 `123456` |
+| XXL-JOB | http://localhost:8080/xxl-job-admin | 确认派单任务已启动 |
+| 网关 | http://127.0.0.1:8600 | 接口入口 |
 
-## 演示账号
+停止用 `backend/scripts/stop-all.ps1`。逐步说明、端口表、常见问题见 [操作手册](docs/操作手册.md)。
 
-| 端 | 方式 |
+## 技术栈
+
+| 模块 | 技术 |
 | --- | --- |
-| 管理端 | admin / 111111 |
-| 乘客端 | 登录页点「登录/注册」展开，点「演示账号」行填入手机号和验证码 123456，勾选协议后登录（real 模式走 `/customer/sms/send`、`/customer/loginByPhone`，手机号对应 customer_id=1） |
-| 司机端 | 手机号验证码登录（real 模式走 `/driver/sms/send`、`/driver/loginByPhone`）。点「演示账号」填入的是司机 ID 1 的手机号；输入其他手机号会注册一个未认证的新司机 |
+| 后端 | Java 17、Spring Boot 3.0.5、Spring Cloud 2022.0.2、Spring Cloud Alibaba（Nacos）、OpenFeign、MyBatis-Plus |
+| 业务组件 | XXL-JOB 派单、Redisson 分布式锁、Drools 计费规则、RabbitMQ 消息 |
+| 数据与存储 | MySQL 8、Redis 7（登录态、GEO、派单队列）、MongoDB 6（服务轨迹） |
+| 管理端 | Vue 3、Vite 5、Element Plus、Pinia |
+| 乘客端 / 司机端 | uni-app（Vue 3）、Pinia、Sass，H5 运行 |
 
-乘客端的验证码固定为 Nacos `web-customer-dev.yaml` 里的 `roadrescue.sms.demo-code`，尚未接短信服务商，上生产前必须清空。`/customer/demoLogin` 仍保留，供接口层取 token。
+## 项目结构
 
-演示登录只在 Nacos 配置 `roadrescue.demo-login.enabled=true` 时注册，用来替代 H5 无法调用的 `wx.login`。
+```text
+RoadRescue/
+├─ backend/
+│  ├─ daijia-parent/    # Spring Cloud 微服务：网关、web-customer/driver/mgr、service-*；DEFAULT_GROUP 为 Nacos 配置
+│  ├─ infra/            # docker-compose 中间件
+│  ├─ scripts/          # start-all / stop-all / nacos-import / smoke-test
+│  ├─ sql/              # daijia.sql、tables_xxl_job.sql、test-data.sql、migrations
+│  ├─ xxl-job-master/   # 定制版 XXL-JOB 调度中心源码
+│  └─ .env.example      # 微信、腾讯云密钥模板（复制为 .env，已 gitignore）
+├─ apps/
+│  ├─ admin-web/        # 调度管理端，端口 9527
+│  ├─ passenger-uniapp/ # 乘客端，H5 端口 9090
+│  └─ driver-uniapp/    # 司机端，H5 端口 9091
+├─ docs/                # 操作手册、开发说明、支付配置、截图
+└─ evidence/            # 早期关键页截图
+```
 
-## 前端 → 后端接口对照
+## 文档导航
 
-| 页面约定（Mock） | 真实接口 |
+| 分类 | 文档 |
 | --- | --- |
-| 乘客 `POST /order` | `POST /customer-api/order/submitOrder`（救援信息存 `remark` JSON） |
-| 乘客 `GET /order/list`、`/order/:id` | `findCustomerOrderPage`、`getOrderInfo` |
-| 乘客 `POST /order/:id/cancel` | `GET /order/cancelOrder/{id}`（新增，仅待接单可取消） |
-| 乘客 `GET /coupon/list` | `findNoUsePage` / `findUsedPage` |
-| 司机 `GET /hall/orders` | `updateDriverLocation` + `findNewOrderQueueData` |
-| 司机 `POST /hall/orders/:id/grab` | `robNewOrder/{id}` |
-| 司机 `POST /my/orders/:id/depart` | `updateOrderLocationToCache` → `driverArriveStartLocation` → `updateOrderCart` → `startDrive` |
-| 司机 `POST /my/orders/:id/finish` | `saveOrderServiceLocation` → `endDrive` |
-
-适配代码：`apps/*/mock/real-adapter.js`。
-
-## 后端改动（相对乐尚代驾）
-
-- 管理端接口：`web-mgr` 原来的订单/司机/乘客控制器是空的，这次补齐分页、详情、看板统计、司机审核、乘客启停。下游在 service-order / service-driver / service-customer 新增 `*MgrController` 和对应的 Feign Client。
-- 乘客取消订单：`/order/cancelOrder/{orderId}`，校验订单归属，且只允许取消待接单的单。
-- 救援信息透传：`SubmitOrderForm`、`OrderInfoVo`、`OrderListVo` 增加 `remark`，Mapper 查询带出。
-- Bug 修复：`LocationServiceImpl.calculateOrderRealDistance` 把米当成公里计费（18667 公里 → 9 万多元），改为换算成公里并保留两位小数。
-- 派单：平台搜索范围由 `roadrescue.dispatch.search-radius-km` 配置，默认 100 公里，再按司机的 `order_distance` 和 `accept_distance` 筛选。演示司机不限订单里程、接单距离为 50 公里；大厅“附近订单”还会按所选 10/30/50/100 公里范围过滤。
-- 司机大厅每 5 秒刷新派单快照；查询不会清空待接单订单，已接单或取消的订单会移除。队列有效期与派单去重记录均为 16 分钟，返回数据包含救援类型、价格和坐标。
-- 司机详情允许收到派单的司机预览待抢单订单，联系方式在接单后返回；其他司机已接订单仍禁止访问。详情的 `mine` 字段区分待抢单与当前司机已接订单。
-- 抢单按订单独立加锁，并以数据库“待接单且未分配司机”的条件更新确认归属；Redis 接单标记按订单隔离。司机接口会透传抢单失败，成功后详情立即切换为“待发车”。
-- 字符集：`daijia.sql` 开头补 `SET NAMES utf8mb4`，避免导入时中文被双重编码。
-- 密钥：`common-account.yaml` 改成从环境变量读取，删除支付私钥 pem；`scripts/load-env.cmd` 在启动时加载 `backend/.env`。
-
-## 截图
-
-`evidence/agent-browser/`：
-
-- 管理端：`admin-01-login` … `admin-09-order-detail`
-- 乘客端（real 模式）：`passenger-01-home`、`02-orders`、`03-order-detail`、`04-mine`
-- 司机端（real 模式）：`driver-01-login`、`02-hall`（派单队列中的真实订单）、`03-grab`、`04-my-orders`、`05-order-detail`、`06-mine`
-
-## 已知缺口
-
-- H5 已接入支付宝网页沙箱支付；配置及联调见 [支付宝沙箱支付](docs/alipay-sandbox.md)。小程序真实微信支付接口预留且关闭，H5 登录仍使用演示账号。
-- 救援报价和结算统一由服务端计算；结束服务进入待付款，支付宝通知验签或服务端主动查询确认后才更新为已付款。支付宝分账尚未接入。
-- `order_info` 没有救援专用字段（服务类型、车型、车牌），暂存在 `remark` JSON 里。
-- 乘客端的车辆、服务项目、兑换码，以及司机端的短信、分级认证、钱包流水，仍走本地 mock。
-- 司机端「取消接单」没有对应后端接口，real 模式下提示联系调度改派。
-- 腾讯云人脸识别未接入，`test-data.sql` 预置了当天的人脸记录。
+| 使用与部署 | [操作手册](docs/操作手册.md)：本地启动、三端操作、派单抢单、常见问题 |
+| 开发 | [开发说明](docs/开发说明.md)：接口对照、后端改动、已知缺口 |
+| 支付 | [支付宝沙箱支付](docs/alipay-sandbox.md) |
 
 ## License
 
-MIT
+本项目使用 [MIT License](./LICENSE)。
