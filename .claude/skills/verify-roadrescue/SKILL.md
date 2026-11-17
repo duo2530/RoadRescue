@@ -9,7 +9,9 @@ description: 驱动并验证「道路救援服务平台」的真实运行效果�
 
 ## Launch
 
-依赖：Docker Desktop、JDK 17（`D:\Develop\Java\jdk-17`）、Maven、Node。三个前端的 `.env` 已是 `VITE_API_MODE=real`。
+依赖：Docker Desktop、JDK 17、Maven、Node。三个前端的 `.env` 已是 `VITE_API_MODE=real`。
+
+**JDK 17**：后端必须用 JDK 17 编译和启动。JDK 装在哪里因机器而异，不要假设固定目录；`PATH` 上默认的 `java` 也可能不是 17。启动前先在本机找到一个 JDK 17 根目录（下文记作 `<JDK17>`），用 `"<JDK17>/bin/java" -version` 确认主版本是 17。可以从 `JAVA_HOME`、`where java`、IDE 和常见安装目录里找，发行版不限（Oracle、Temurin、GraalVM 等都行）。找不到 JDK 17 就停下来告诉用户，不要静默降级到 mock，也不要跳过后端验证。
 
 1. **中间件**（六个容器，前缀 `roadrescue-`）：
    `docker compose -f backend/infra/docker-compose.yml up -d`，直到 `docker ps --filter name=roadrescue- --filter health=healthy` 有 6 行。
@@ -20,8 +22,8 @@ description: 驱动并验证「道路救援服务平台」的真实运行效果�
    `docker cp backend/sql/test-data.sql roadrescue-mysql:/tmp/t.sql`
    `docker exec roadrescue-mysql sh -c 'mysql -uroot -p"$MYSQL_ROOT_PASSWORD" < /tmp/t.sql'`
 4. **后端 jar**：改过 Java 代码或 `roadrescue.*` 配置前缀后必须重编，旧 jar 读不到新配置（曾因此 demoLogin 返回 404）。先停服务再编，否则 Windows 下 repackage 因 jar 被占用失败：
-   `bash -c 'cd backend/daijia-parent && JAVA_HOME=/d/Develop/Java/jdk-17 PATH=/d/Develop/Java/jdk-17/bin:$PATH mvn -q -DskipTests -o install'`
-5. **启动后端**：`powershell -NoProfile -ExecutionPolicy Bypass -File backend/scripts/start-all.ps1`，约 60 到 90 秒。就绪标准是 `curl http://127.0.0.1:8600/customer-api/customer/demoLogin` 返回 `"code":200`。返回 503 表示网关已起、服务还没注册完。
+   `bash -c 'cd backend/daijia-parent && JAVA_HOME="<JDK17>" PATH="<JDK17>/bin:$PATH" mvn -q -DskipTests -o install'`（`<JDK17>` 换成上面找到的目录，Git Bash 下写成 `/d/...` 形式）
+5. **启动后端**：`powershell -NoProfile -ExecutionPolicy Bypass -File backend/scripts/start-all.ps1 -JdkHome '<JDK17>'`（这里用 Windows 路径；脚本的默认值只适用于某一台机器，必须显式传），约 60 到 90 秒。就绪标准是 `curl http://127.0.0.1:8600/customer-api/customer/demoLogin` 返回 `"code":200`。返回 503 表示网关已起、服务还没注册完。
 6. **前端**：`bash .claude/skills/verify-roadrescue/scripts/up-frontends.sh`，三个端口都返回 200 才算就绪。必须用 `localhost`，`127.0.0.1` 不通（Vite 绑在 IPv6）。
 
 ## Doctor
