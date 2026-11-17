@@ -149,9 +149,9 @@ services:
   # ------------------------------------------------------ XXL-JOB admin 2.3.0
   # 注意：docker hub 上 xuxueli/xxl-job-admin:2.3.0 镜像里的 admin 实际是旧版本，
   # 没有 /jobinfo/addAndStartJob、/jobinfo/startJob 等接口（项目 dispatch 用到），
-  # 因此这里用仓库内 xxl-job-master(2.3.0) 源码构建出的 jar 覆盖 /app.jar。
-  # 构建：cd xxl-job-master && mvn -pl xxl-job-admin -am -DskipTests package
-  #      copy xxl-job-master\xxl-job-admin\target\xxl-job-admin-2.3.0.jar infra\artifacts\xxl-job-admin.jar
+  # 因此这里直接挂载 backend/xxl-job-master（2.3.0 定制版）源码打包出的 jar 覆盖 /app.jar。
+  # 首次启动前先构建（在 backend/xxl-job-master 目录执行）：
+  #   mvn -pl xxl-job-admin -am -DskipTests package
   xxl-job-admin:
     image: xuxueli/xxl-job-admin:2.3.0
     container_name: roadrescue-xxl-job-admin
@@ -169,7 +169,7 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      - ./artifacts/xxl-job-admin.jar:/app.jar:ro
+      - ../xxl-job-master/xxl-job-admin/target/xxl-job-admin-2.3.0.jar:/app.jar:ro
       - ./data/xxl-job/applogs:/data/applogs
       - ./scripts/xxl-job-admin-healthcheck.sh:/healthcheck/xxl-job-admin.sh:ro
     depends_on:
